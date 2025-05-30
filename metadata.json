@@ -1,0 +1,7 @@
+
+{
+  "name": "NatuSambilile",
+  "description": "A Learning Management System leveraging Gemini API for AI-powered content generation. Create courses, modules, and lessons with AI assistance.",
+  "requestFramePermissions": [],
+  "prompt": ""
+}

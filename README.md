@@ -170,4 +170,4 @@ Vercel is a great platform for deploying modern web applications. Here's how you
 *   A Vercel account (sign up at [vercel.com](https://vercel.com/)).
 *   Git (if your project is not already in a Git repository, initialize one and push it to GitHub/GitLab/Bitbucket).
 
-### 2. Deployment Steps"# -NatuSambilile" 
+### 2. Deployment Steps

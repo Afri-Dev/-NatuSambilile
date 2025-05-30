@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NatuSambilile</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: {
+              DEFAULT: '#3B82F6', // Blue 500
+              light: '#60A5FA',   // Blue 400
+              dark: '#1D4ED8',    // Blue 700
+            },
+            secondary: {
+              DEFAULT: '#10B981', // Emerald 500
+              light: '#34D399',   // Emerald 400
+              dark: '#047857',    // Emerald 700
+            },
+            accent: {
+              DEFAULT: '#FBBF24', // Amber 400
+              light: '#FCD34D',   // Amber 300
+              dark: '#B45309',    // Amber 700 (Adjusted for more contrast)
+            },
+            neutral: {
+              lightest: '#F9FAFB', // Gray 50
+              light: '#F3F4F6',    // Gray 100
+              DEFAULT: '#E5E7EB',  // Gray 200 (Used as general neutral border)
+              medium: '#D1D5DB',   // Gray 300
+              dark: '#374151',     // Gray 700
+              darker: '#1F2937',   // Gray 800
+            },
+            error: {
+              DEFAULT: '#EF4444', // Red 500
+              light: '#F87171',   // Red 400
+              dark: '#B91C1C',    // Red 700
+            },
+            success: { // Added for consistency with error
+              DEFAULT: '#10B981', // Same as secondary.DEFAULT
+              light: '#A7F3D0',   // Emerald 200
+              dark: '#047857',    // Same as secondary.dark
+            }
+          }
+        }
+      }
+    }
+  </script>
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@^19.1.0",
+    "react-dom/": "https://esm.sh/react-dom@^19.1.0/",
+    "@google/genai": "https://esm.sh/@google/genai@^1.2.0",
+    "react-router-dom": "https://esm.sh/react-router-dom@^7.6.1",
+    "react/": "https://esm.sh/react@^19.1.0/"
+  }
+}
+</script>
+</head>
+<body class="bg-neutral-light">
+  <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
+</body>
+</html><link rel="stylesheet" href="index.css">
+<script src="index.tsx" type="module"></script>
