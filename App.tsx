@@ -1,5 +1,5 @@
 
-import React, { useState, createContext, useEffect } from 'react';
+import React, { createContext, useEffect } from 'react';
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Navbar from './components/common/Navbar';
 import Footer from './components/common/Footer';
@@ -7,7 +7,7 @@ import HomePage from './pages/HomePage';
 import CoursePage from './pages/CoursePage';
 import LoginPage from './pages/LoginPage';
 import AdminDashboardPage from './pages/AdminDashboardPage'; // Import AdminDashboardPage
-import { Course, Module, Lesson, User, UserRole, Quiz, Question, QuizAttempt, StudentAnswer, LessonProgress } from './types';
+import { Course, Module, Lesson, User, UserRole, Quiz, Question, QuizAttempt, LessonProgress } from './types';
 import useLocalStorage from './hooks/useLocalStorage';
 import { USER_ROLES } from './constants';
 

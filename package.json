@@ -10,9 +10,15 @@
   },
   "dependencies": {
     "@google/genai": "^1.2.0",
+    "@types/bcryptjs": "^2.4.6",
+    "bcryptjs": "^3.0.2",
+    "express-mongo-sanitize": "^2.2.0",
+    "express-rate-limit": "^7.5.0",
+    "helmet": "^8.1.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
-    "react-router-dom": "^7.6.1"
+    "react-router-dom": "^7.6.1",
+    "xss-clean": "^0.1.4"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
