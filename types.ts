@@ -74,12 +74,17 @@ export interface UserProgress {
   lastAccessed?: string;
 }
 
+export type Gender = 'male' | 'female' | 'other' | 'prefer-not-to-say';
+export type AgeRange = 'under-18' | '18-24' | '25-34' | '35-44' | '45-54' | '55-64' | '65-plus';
+
 export interface User {
   id: string;
   username: string;
   email: string; 
   password?: string; // Plain text for demo purposes
   role: UserRole;
+  gender?: Gender;
+  ageRange?: AgeRange;
   lastLogin?: string; // ISO date string of last login
   createdAt?: string; // ISO date string of account creation
   courses?: string[]; // Array of course IDs the user is enrolled in

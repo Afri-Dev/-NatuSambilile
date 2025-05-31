@@ -44,7 +44,7 @@ export interface AppContextType {
   currentUser: User | null;
   registeredUsers: User[];
   login: (identifier: string, password_provided: string) => { success: boolean; message?: string };
-  register: (username: string, email: string, password_provided: string, role: UserRole) => { success: boolean; message?: string };
+  register: (userData: Omit<User, 'id' | 'lastLogin' | 'createdAt'>) => { success: boolean; message?: string };
   logout: () => void;
   canEdit: (user: User | null) => boolean;
 
@@ -94,26 +94,38 @@ const App: React.FC = () => {
     return { success: false, message: "Invalid username/email or password." };
   };
 
-  const register = (username: string, email: string, password_provided: string, role: UserRole): { success: boolean; message?: string } => {
-    if (!username.trim() || !email.trim() || !password_provided.trim() || !role) {
-      return { success: false, message: "All fields are required for registration." };
+  const register = (userData: Omit<User, 'id' | 'lastLogin' | 'createdAt'>): { success: boolean; message?: string } => {
+    const { username, email, password, role, gender, ageRange } = userData;
+    
+    if (!username.trim() || !email.trim() || !password || !role) {
+      return { success: false, message: "All required fields must be provided for registration." };
     }
-    if (!/\S+@\S+\.\S+/.test(email)) { // Moved email validation here from LoginPage
-        return { success: false, message: 'Invalid email format.' };
+    
+    if (!/\S+@\S+\.\S+/.test(email)) {
+      return { success: false, message: 'Invalid email format.' };
     }
+    
     const existingUser = registeredUsers.find(
       u => u.username.toLowerCase() === username.toLowerCase() || u.email.toLowerCase() === email.toLowerCase()
     );
+    
     if (existingUser) {
       return { success: false, message: "Username or email already exists." };
     }
+    
     const newUser: User = {
       id: crypto.randomUUID(),
       username,
       email,
-      password: password_provided, // Storing plain text password for demo
+      password, // Storing plain text password for demo
       role,
+      gender,
+      ageRange,
+      createdAt: new Date().toISOString(),
+      courses: [],
+      quizAttempts: []
     };
+    
     setRegisteredUsers(prev => [...prev, newUser]);
     setCurrentUser(newUser); // Auto-login after registration
     return { success: true, message: "Registration successful! You are now logged in." };

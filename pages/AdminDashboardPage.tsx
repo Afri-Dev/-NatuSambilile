@@ -1,7 +1,7 @@
 
 import React, { useContext, useMemo, useState, useEffect } from 'react';
 import { format } from 'date-fns';
-import { AppContext, AppContextType } from '../App';
+import { AppContext } from '../App';
 import { UserRole } from '../types';
 import { USER_ROLES, UsersIcon, AcademicCapIcon, ClipboardDocumentCheckIcon } from '../constants';
 

@@ -2,7 +2,7 @@
 import React, { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppContext, AppContextType } from '../App';
-import { UserRole } from '../types';
+import { UserRole, Gender, AgeRange } from '../types';
 import { USER_ROLES, XCircleIcon, CheckCircleIcon } from '../constants';
 
 const LoginPage: React.FC = () => {
@@ -14,6 +14,8 @@ const LoginPage: React.FC = () => {
   const [signupUsername, setSignupUsername] = useState('');
   const [signupEmail, setSignupEmail] = useState('');
   const [signupConfirmPassword, setSignupConfirmPassword] = useState('');
+  const [gender, setGender] = useState<Gender>('prefer-not-to-say');
+  const [ageRange, setAgeRange] = useState<AgeRange>('18-24');
   
   const [authMessage, setAuthMessage] = useState<{ type: 'error' | 'success', text: string } | null>(null);
   
@@ -58,7 +60,19 @@ const LoginPage: React.FC = () => {
         return;
     }
 
-    const result = register(signupUsername, signupEmail, password, USER_ROLES.STUDENT as UserRole);
+    // Create a user object with all the required fields
+    const userData = {
+      username: signupUsername,
+      email: signupEmail,
+      password,
+      role: USER_ROLES.STUDENT as UserRole,
+      gender,
+      ageRange,
+      courses: [],
+      quizAttempts: []
+    };
+
+    const result = register(userData);
     if (result.success) {
       // Optionally show success message before navigating, or navigate directly
       // For now, direct navigation after App.tsx's register handles the user state.
@@ -78,6 +92,8 @@ const LoginPage: React.FC = () => {
     setSignupUsername('');
     setSignupEmail('');
     setSignupConfirmPassword('');
+    setGender('prefer-not-to-say');
+    setAgeRange('18-24');
     setAuthMessage(null);
   };
 
@@ -210,7 +226,7 @@ const LoginPage: React.FC = () => {
               </label>
               <input
                 id="confirm-password-signup"
-                name="confirmPassword"
+                name="confirm-password"
                 type="password"
                 autoComplete="new-password"
                 required
@@ -220,6 +236,48 @@ const LoginPage: React.FC = () => {
                 onChange={handleInputChange(setSignupConfirmPassword)}
               />
             </div>
+
+            {/* Gender Selection */}
+            <div>
+              <label htmlFor="gender" className="block text-sm font-medium text-neutral-dark mb-1">
+                Gender
+              </label>
+              <select
+                id="gender"
+                name="gender"
+                className="appearance-none rounded-md relative block w-full px-3 py-3 border border-neutral-medium text-neutral-darker focus:outline-none focus:ring-primary focus:border-primary sm:text-sm bg-transparent"
+                value={gender}
+                onChange={(e) => setGender(e.target.value as Gender)}
+              >
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="other">Other</option>
+                <option value="prefer-not-to-say">Prefer not to say</option>
+              </select>
+            </div>
+
+            {/* Age Range Selection */}
+            <div>
+              <label htmlFor="age-range" className="block text-sm font-medium text-neutral-dark mb-1">
+                Age Range
+              </label>
+              <select
+                id="age-range"
+                name="age-range"
+                className="appearance-none rounded-md relative block w-full px-3 py-3 border border-neutral-medium text-neutral-darker focus:outline-none focus:ring-primary focus:border-primary sm:text-sm bg-transparent"
+                value={ageRange}
+                onChange={(e) => setAgeRange(e.target.value as AgeRange)}
+              >
+                <option value="under-18">Under 18</option>
+                <option value="18-24">18-24</option>
+                <option value="25-34">25-34</option>
+                <option value="35-44">35-44</option>
+                <option value="45-54">45-54</option>
+                <option value="55-64">55-64</option>
+                <option value="65-plus">65+</option>
+              </select>
+            </div>
+
             <div className="text-sm text-neutral-dark">
               <p>You will be registered as a <span className="font-semibold text-primary">Student</span>.</p>
             </div>
