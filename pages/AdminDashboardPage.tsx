@@ -1,8 +1,6 @@
-import { useState, useContext, useMemo, useEffect } from 'react';
+import { useContext, useMemo } from 'react';
 import { AppContext } from '../App';
 import { USER_ROLES } from '../constants';
-import { ChartComponent } from '../components/dashboard/ChartComponent';
-import type { User, UserRole, QuizAttempt as QuizAttemptType, LessonProgress as LessonProgressType } from '../types';
 
 // Type for the chart data items
 interface ChartItem {
@@ -11,13 +9,27 @@ interface ChartItem {
   percentage?: number;
 }
 
-// Type for the user data we'll use in this component
-type AppUser = User & {
+import { ChartComponent } from '../components/dashboard/ChartComponent';
+
+// Define types for user data
+interface User {
+  id: string;
+  role: string;
+  gender?: string;
+  ageRange?: string;
   progress?: {
     percentage: number;
-    completedLessons: string[];
-    lastAccessed?: string;
   };
+}
+
+interface QuizAttempt {
+  userId: string;
+  score: number;
+  maxScore: number;
+}
+
+interface LessonProgress {
+  userId: string;
 }
 
 
@@ -44,123 +56,13 @@ const AdminDashboardPage = () => {
   const { 
     courses = [], 
     registeredUsers = [] as User[], 
-    quizAttempts = [] as QuizAttemptType[], 
-    lessonProgress = [] as LessonProgressType[] 
+    quizAttempts = [] as QuizAttempt[], 
+    lessonProgress = [] as LessonProgress[] 
   } = appContext;
-
-  // State for instructor creation
-  const [showCreateInstructorModal, setShowCreateInstructorModal] = useState(false);
-  const [newInstructor, setNewInstructor] = useState({
-    username: '',
-    email: '',
-    password: '',
-    confirmPassword: ''
-  });
-  const [isCreating, setIsCreating] = useState(false);
-  const [error, setError] = useState('');
-
-  // State for user role management
-  const [editingUser, setEditingUser] = useState<AppUser | null>(null);
-  const [selectedRole, setSelectedRole] = useState<UserRole>(USER_ROLES.USER);
-  const [isUpdatingRole, setIsUpdatingRole] = useState(false);
-  
-  // State for registered users with proper typing
-  const [registeredUsersState, setRegisteredUsersState] = useState<AppUser[]>([]);
-  
-  // Update local state when context changes
-  useEffect(() => {
-    // Map registered users to AppUser type with proper progress property
-    const usersWithProgress = registeredUsers.map(user => ({
-      ...user,
-      progress: user.progress || {
-        percentage: 0,
-        completedLessons: []
-      }
-    }));
-    setRegisteredUsersState(usersWithProgress);
-  }, [registeredUsers]);
-
-  const handleRoleUpdate = async (user: AppUser, newRole: UserRole) => {
-    if (!window.confirm(`Are you sure you want to update ${user.username}'s role to ${newRole}?`)) return;
-    
-    try {
-      setIsUpdatingRole(true);
-      setError('');
-      
-      // Here you would typically make an API call to update the user's role
-      // For example: await updateUserRole(user.id, newRole);
-      
-      // Update local state
-      const updatedUsers = registeredUsersState.map(u => 
-        u.id === user.id ? { ...u, role: newRole } : u
-      );
-      
-      // Update local state with the updated users
-      setRegisteredUsersState(updatedUsers);
-      
-      alert(`User role updated to ${newRole} successfully!`);
-    } catch (err) {
-      console.error('Error updating user role:', err);
-      setError('Failed to update user role. Please try again.');
-    } finally {
-      setIsUpdatingRole(false);
-      setEditingUser(null);
-    }
-  };
-
-  const handleCreateInstructor = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Validate form
-    if (newInstructor.password !== newInstructor.confirmPassword) {
-      setError("Passwords don't match!");
-      return;
-    }
-
-    try {
-      setIsCreating(true);
-      setError('');
-      
-      // Create new instructor
-      const newUser: AppUser = {
-        id: Date.now().toString(),
-        username: newInstructor.username,
-        email: newInstructor.email,
-        role: USER_ROLES.INSTRUCTOR,
-        password: newInstructor.password,
-        createdAt: new Date().toISOString(),
-        progress: {
-          percentage: 0,
-          completedLessons: []
-        }
-      };
-
-      // Here you would typically make an API call to create the instructor
-      // For example: await createInstructor(newUser);
-      
-      // In a real app, you would update the users list from the API response
-      // For now, we'll just show an alert
-      alert(`Instructor ${newUser.username} created successfully!`);
-      
-      // Reset form and close modal
-      setNewInstructor({
-        username: '',
-        email: '',
-        password: '',
-        confirmPassword: ''
-      });
-      setShowCreateInstructorModal(false);
-    } catch (err) {
-      console.error('Error creating instructor:', err);
-      setError('Failed to create instructor. Please try again.');
-    } finally {
-      setIsCreating(false);
-    }
-  };
 
   const analytics = useMemo<AnalyticsData>(() => {
     // Filter out admin users for all analytics
-    const nonAdminUsers = registeredUsersState.filter(user => user.role !== USER_ROLES.ADMIN);
+    const nonAdminUsers = registeredUsers.filter(user => user.role !== USER_ROLES.ADMIN);
     const totalNonAdminUsers = nonAdminUsers.length;
     
     // Get non-admin user IDs for filtering other data
@@ -245,15 +147,37 @@ const AdminDashboardPage = () => {
       }
     });
 
-    // Format gender data for charts
+    // Format gender data for the chart with better labels and sorting
     const formatGenderData = () => {
+      // Define the preferred order of gender labels
+      const genderOrder = ['male', 'female', 'non-binary', 'other', 'prefer-not-to-say', 'not-specified'];
+      
       return Object.entries(genderDistribution)
-        .filter(([key]) => key !== 'not-specified' || genderDistribution[key as keyof typeof genderDistribution] > 0)
-        .map(([key, value]) => ({
-          label: key.charAt(0).toUpperCase() + key.slice(1).replace(/-/g, ' '),
-          value,
-          percentage: totalNonAdminUsers > 0 ? Math.round((value / totalNonAdminUsers) * 100) : 0
-        }));
+        .filter(([_, value]) => value > 0)
+        .map(([key, value]) => {
+          // Format the label nicely
+          const formatLabel = (str: string) => {
+            if (str === 'not-specified') return 'Not Specified';
+            if (str === 'prefer-not-to-say') return 'Prefer Not to Say';
+            if (str === 'non-binary') return 'Non-binary';
+            if (str === 'male') return 'Male';
+            if (str === 'female') return 'Female';
+            return str.charAt(0).toUpperCase() + str.slice(1);
+          };
+          
+          return {
+            label: formatLabel(key),
+            key: key,
+            value,
+            percentage: totalNonAdminUsers > 0 ? (value / totalNonAdminUsers) * 100 : 0
+          };
+        })
+        // Sort by our preferred order
+        .sort((a, b) => {
+          const aIndex = genderOrder.indexOf(a.key) ?? genderOrder.length;
+          const bIndex = genderOrder.indexOf(b.key) ?? genderOrder.length;
+          return aIndex - bIndex;
+        });
     };
 
     // Format age range data for charts
@@ -356,23 +280,10 @@ const AdminDashboardPage = () => {
         
         {/* User Management Section */}
         <div className="mt-8">
-          <div className="flex justify-between items-center mb-6">
-            <div>
-              <h2 className="text-2xl font-bold">User Management</h2>
-              <p className="text-gray-600">
-                Manage platform users and their roles. Currently showing {analytics.totalUsers} non-admin users.
-              </p>
-            </div>
-            <button 
-              onClick={() => setShowCreateInstructorModal(true)}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clipRule="evenodd" />
-              </svg>
-              Create Instructor
-            </button>
-          </div>
+          <h2 className="text-2xl font-bold mb-4">User Management</h2>
+          <p className="text-gray-600 mb-6">
+            Manage platform users and their roles. Currently showing {analytics.totalUsers} non-admin users.
+          </p>
           
           {/* User Statistics */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -380,14 +291,6 @@ const AdminDashboardPage = () => {
               <h3 className="text-lg font-semibold mb-2">Total Users</h3>
               <p className="text-3xl font-bold">{analytics.totalUsers}</p>
               <p className="text-sm text-gray-500">Excluding admins</p>
-            </div>
-            
-            <div className="bg-white p-6 rounded-lg shadow">
-              <h3 className="text-lg font-semibold mb-2">Instructors</h3>
-              <p className="text-3xl font-bold">
-                {registeredUsers.filter(user => user.role === USER_ROLES.INSTRUCTOR).length}
-              </p>
-              <p className="text-sm text-gray-500">Active instructors</p>
             </div>
             
             <div className="bg-white p-6 rounded-lg shadow">
@@ -418,184 +321,7 @@ const AdminDashboardPage = () => {
               </div>
             </div>
           </div>
-
-          {/* Users Table */}
-          <div className="bg-white rounded-lg shadow overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {registeredUsers
-                    .filter(user => user.role !== USER_ROLES.ADMIN)
-                    .map((user) => (
-                      <tr key={user.id}>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center">
-                            <div className="text-sm font-medium text-gray-900">{user.username || 'N/A'}</div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">{user.email}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                            user.role === USER_ROLES.INSTRUCTOR 
-                              ? 'bg-green-100 text-green-800' 
-                              : 'bg-blue-100 text-blue-800'
-                          }`}>
-                            {user.role}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                          {editingUser?.id === user.id ? (
-                            <div className="flex space-x-2">
-                              <select
-                                value={selectedRole}
-                                onChange={(e) => setSelectedRole(e.target.value as UserRole)}
-                                className="border rounded px-2 py-1 text-sm"
-                              >
-                                <option value="">Select Role</option>
-                                <option value={USER_ROLES.USER}>User</option>
-                                <option value={USER_ROLES.INSTRUCTOR}>Instructor</option>
-                                <option value={USER_ROLES.ADMIN}>Admin</option>
-                              </select>
-                              <button
-                                onClick={() => handleRoleUpdate(user, selectedRole)}
-                                disabled={!selectedRole || isUpdatingRole}
-                                className="text-indigo-600 hover:text-indigo-900 disabled:opacity-50"
-                              >
-                                Save
-                              </button>
-                              <button
-                                onClick={() => setEditingUser(null)}
-                                className="text-gray-500 hover:text-gray-700"
-                              >
-                                Cancel
-                              </button>
-                            </div>
-                          ) : (
-                            <button
-                              onClick={() => {
-                                setEditingUser(user);
-                                setSelectedRole(user.role);
-                              }}
-                              className="text-indigo-600 hover:text-indigo-900"
-                            >
-                              Edit Role
-                            </button>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
         </div>
-
-        {/* Create Instructor Modal */}
-        {showCreateInstructorModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-xl font-semibold">Create New Instructor</h3>
-                <button 
-                  onClick={() => setShowCreateInstructorModal(false)}
-                  className="text-gray-500 hover:text-gray-700"
-                >
-                  ✕
-                </button>
-              </div>
-              
-              {error && (
-                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-                  {error}
-                </div>
-              )}
-              
-              <form onSubmit={handleCreateInstructor} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
-                  <input
-                    type="text"
-                    value={newInstructor.username}
-                    onChange={(e) => setNewInstructor({...newInstructor, username: e.target.value})}
-                    className="w-full border rounded px-3 py-2"
-                    required
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                  <input
-                    type="email"
-                    value={newInstructor.email}
-                    onChange={(e) => setNewInstructor({...newInstructor, email: e.target.value})}
-                    className="w-full border rounded px-3 py-2"
-                    required
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-                  <input
-                    type="password"
-                    value={newInstructor.password}
-                    onChange={(e) => setNewInstructor({...newInstructor, password: e.target.value})}
-                    className="w-full border rounded px-3 py-2"
-                    required
-                    minLength={6}
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
-                  <input
-                    type="password"
-                    value={newInstructor.confirmPassword}
-                    onChange={(e) => setNewInstructor({...newInstructor, confirmPassword: e.target.value})}
-                    className="w-full border rounded px-3 py-2"
-                    required
-                    minLength={6}
-                  />
-                </div>
-                
-                <div className="flex justify-end space-x-3 pt-4">
-                  <button
-                    type="button"
-                    onClick={() => setShowCreateInstructorModal(false)}
-                    className="px-4 py-2 border rounded-md text-gray-700 hover:bg-gray-50"
-                    disabled={isCreating}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={isCreating}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 flex items-center"
-                  >
-                    {isCreating ? (
-                      <>
-                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        Creating...
-                      </>
-                    ) : 'Create Instructor'}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
