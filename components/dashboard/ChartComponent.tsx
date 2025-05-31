@@ -10,9 +10,7 @@ import {
   Tooltip, 
   Legend, 
   ResponsiveContainer,
-  Cell,
-  TooltipProps,
-  PieLabelRenderProps
+  Cell
 } from 'recharts';
 
 interface ChartData {
