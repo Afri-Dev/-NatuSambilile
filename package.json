@@ -13,6 +13,7 @@
     "@types/bcryptjs": "^2.4.6",
     "@types/chart.js": "^2.9.41",
     "@types/react-csv": "^1.1.10",
+    "@types/recharts": "^1.8.29",
     "bcryptjs": "^3.0.2",
     "bootstrap": "^5.3.6",
     "chart.js": "^4.4.9",
@@ -30,6 +31,7 @@
     "react-dom": "^19.1.0",
     "react-feather": "^2.0.10",
     "react-router-dom": "^7.6.1",
+    "recharts": "^2.15.3",
     "xss-clean": "^0.1.4"
   },
   "devDependencies": {

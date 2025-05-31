@@ -1,76 +1,100 @@
-
-import React, { useContext, useMemo, useState, useEffect } from 'react';
-import { format } from 'date-fns';
+import { useContext, useMemo } from 'react';
 import { AppContext } from '../App';
-import { UserRole } from '../types';
-import { USER_ROLES, UsersIcon, AcademicCapIcon, ClipboardDocumentCheckIcon } from '../constants';
+import { USER_ROLES } from '../constants';
 
-// Import components
-import { MetricCard } from '../components/dashboard/MetricCard';
-import { ContentOverview } from '../components/dashboard/ContentOverview';
-import AnalyticsCharts from '../components/dashboard/AnalyticsCharts';
-import { UserManagement } from '../components/dashboard/UserManagement';
-import { CreateInstructorModal } from '../components/dashboard/CreateInstructorModal';
-import DemographicAnalytics from '../components/dashboard/DemographicAnalytics';
+// Type for the chart data items
+interface ChartItem {
+  label: string;
+  value: number;
+  percentage?: number;
+}
 
-const AdminDashboardPage: React.FC = () => {
+import { ChartComponent } from '../components/dashboard/ChartComponent';
+
+// Define types for user data
+interface User {
+  id: string;
+  role: string;
+  gender?: string;
+  ageRange?: string;
+  progress?: {
+    percentage: number;
+  };
+}
+
+interface QuizAttempt {
+  userId: string;
+  score: number;
+  maxScore: number;
+}
+
+interface LessonProgress {
+  userId: string;
+}
+
+
+
+interface AnalyticsData {
+  totalUsers: number;
+  totalCourses: number;
+  totalModules: number;
+  totalLessons: number;
+  totalQuizzes: number;
+  totalQuizAttempts: number;
+  averageQuizScore: string;
+  totalLessonCompletions: number;
+  progressDistribution: ChartItem[];
+  genderDistribution: ChartItem[];
+  ageRangeDistribution: ChartItem[];
+}
+
+const AdminDashboardPage = () => {
   const appContext = useContext(AppContext);
   if (!appContext) throw new Error("AppContext is null");
-  const {
-    courses, registeredUsers, quizAttempts, lessonProgress,
-    currentUser, addUserByAdmin, updateUserRole, deleteUserByAdmin
+  
+  // Safely destructure with default values to prevent undefined errors
+  const { 
+    courses = [], 
+    registeredUsers = [] as User[], 
+    quizAttempts = [] as QuizAttempt[], 
+    lessonProgress = [] as LessonProgress[] 
   } = appContext;
 
-  // Analytics data preparation
-  const [exportData, setExportData] = useState<any[]>([]);
-
-  useEffect(() => {
-    // Prepare data for CSV export
-    const data = registeredUsers.map(user => {
-      // Safely format dates, providing a fallback for missing dates
-      const registrationDate = user.createdAt ? 
-        format(new Date(user.createdAt), 'yyyy-MM-dd HH:mm') : 'N/A';
-      const lastLogin = user.lastLogin ? 
-        format(new Date(user.lastLogin), 'yyyy-MM-dd HH:mm') : 'Never';
-      
-      return {
-        Username: user.username,
-        Email: user.email,
-        Role: user.role,
-        RegistrationDate: registrationDate,
-        LastLogin: lastLogin,
-        CoursesEnrolled: user.courses?.length || 0,
-        QuizzesCompleted: user.quizAttempts?.length || 0,
-        Progress: user.progress?.percentage || 0
-      };
-    });
-    setExportData(data);
-  }, [registeredUsers]);
-
-  const [isCreateInstructorModalOpen, setIsCreateInstructorModalOpen] = useState(false);
-  const [newInstructorForm, setNewInstructorForm] = useState({ username: '', email: '', password: '', confirmPassword: '' });
-  const [formMessage, setFormMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-  const [isLoadingAction, setIsLoadingAction] = useState(false);
-  const [editingUserRole, setEditingUserRole] = useState<{ userId: string; role: UserRole } | null>(null);
-
-  // Analytics data
-  const analytics = useMemo(() => {
-    const totalUsers = registeredUsers.length;
+  const analytics = useMemo<AnalyticsData>(() => {
+    // Filter out admin users for all analytics
+    const nonAdminUsers = registeredUsers.filter(user => user.role !== USER_ROLES.ADMIN);
+    const totalNonAdminUsers = nonAdminUsers.length;
+    
+    // Get non-admin user IDs for filtering other data
+    const nonAdminUserIds = new Set(nonAdminUsers.map(user => user.id));
+    
+    // Course metrics
     const totalCourses = courses.length;
     const totalModules = courses.reduce((sum, course) => sum + course.modules.length, 0);
-    const totalLessons = courses.reduce((sum, course) =>
-      sum + course.modules.reduce((modSum, mod) => modSum + mod.lessons.length, 0), 0);
-    const totalQuizzes = courses.reduce((sum, course) =>
-      sum + course.modules.reduce((modSum, mod) => modSum + (mod.quizzes || []).length, 0), 0);
+    const totalLessons = courses.reduce(
+      (sum, course) => sum + course.modules.reduce((modSum, mod) => modSum + mod.lessons.length, 0),
+      0
+    );
+    const totalQuizzes = courses.reduce(
+      (sum, course) => sum + course.modules.reduce((modSum, mod) => modSum + (mod.quizzes?.length || 0), 0),
+      0
+    );
 
-    const totalQuizAttempts = quizAttempts.length;
-    const totalScoreSum = quizAttempts.reduce((sum, attempt) => sum + attempt.score, 0);
-    const totalMaxScoreSum = quizAttempts.reduce((sum, attempt) => sum + attempt.maxScore, 0);
-    const averageQuizScore = totalMaxScoreSum > 0 ? ((totalScoreSum / totalMaxScoreSum) * 100).toFixed(1) + '%' : 'N/A';
+    // Quiz metrics for non-admin users
+    const nonAdminQuizAttempts = quizAttempts.filter(attempt => nonAdminUserIds.has(attempt.userId));
+    const totalQuizAttempts = nonAdminQuizAttempts.length;
+    const totalScoreSum = nonAdminQuizAttempts.reduce((sum, attempt) => sum + attempt.score, 0);
+    const totalMaxScoreSum = nonAdminQuizAttempts.reduce((sum, attempt) => sum + attempt.maxScore, 0);
+    const averageQuizScore = totalMaxScoreSum > 0 
+      ? ((totalScoreSum / totalMaxScoreSum) * 100).toFixed(1) + '%' 
+      : 'N/A';
 
-    const totalLessonCompletions = lessonProgress.length;
+    // Lesson completions for non-admin users
+    const totalLessonCompletions = lessonProgress
+      .filter(progress => nonAdminUserIds.has(progress.userId))
+      .length;
 
-    // Get user progress distribution
+    // Initialize distributions
     const progressDistribution = [
       { label: '0-25%', value: 0 },
       { label: '26-50%', value: 0 },
@@ -78,15 +102,14 @@ const AdminDashboardPage: React.FC = () => {
       { label: '76-100%', value: 0 }
     ];
 
-    // Gender distribution
     const genderDistribution = {
       male: 0,
       female: 0,
       other: 0,
-      'prefer-not-to-say': 0
+      'prefer-not-to-say': 0,
+      'not-specified': 0
     };
 
-    // Age range distribution
     const ageRangeDistribution = {
       'under-18': 0,
       '18-24': 0,
@@ -98,15 +121,16 @@ const AdminDashboardPage: React.FC = () => {
       'not-specified': 0
     };
 
-    registeredUsers.forEach(user => {
-      // Progress distribution
+    // Process each non-admin user
+    nonAdminUsers.forEach(user => {
+      // Track progress distribution
       const progress = user.progress?.percentage || 0;
       if (progress <= 25) progressDistribution[0].value++;
       else if (progress <= 50) progressDistribution[1].value++;
       else if (progress <= 75) progressDistribution[2].value++;
       else progressDistribution[3].value++;
 
-      // Gender distribution
+      // Track gender distribution
       const gender = user.gender || 'not-specified';
       if (gender in genderDistribution) {
         genderDistribution[gender as keyof typeof genderDistribution]++;
@@ -114,7 +138,7 @@ const AdminDashboardPage: React.FC = () => {
         genderDistribution.other++;
       }
 
-      // Age range distribution
+      // Track age range distribution
       const ageRange = user.ageRange || 'not-specified';
       if (ageRange in ageRangeDistribution) {
         ageRangeDistribution[ageRange as keyof typeof ageRangeDistribution]++;
@@ -123,23 +147,32 @@ const AdminDashboardPage: React.FC = () => {
       }
     });
 
-    // Convert to array for charts
-    const genderData = Object.entries(genderDistribution).map(([key, value]) => ({
-      label: key.charAt(0).toUpperCase() + key.slice(1).replace(/-/g, ' '),
-      value,
-      percentage: totalUsers > 0 ? Math.round((value / totalUsers) * 100) : 0
-    }));
+    // Format gender data for charts
+    const formatGenderData = () => {
+      return Object.entries(genderDistribution)
+        .filter(([key]) => key !== 'not-specified' || genderDistribution[key as keyof typeof genderDistribution] > 0)
+        .map(([key, value]) => ({
+          label: key.charAt(0).toUpperCase() + key.slice(1).replace(/-/g, ' '),
+          value,
+          percentage: totalNonAdminUsers > 0 ? Math.round((value / totalNonAdminUsers) * 100) : 0
+        }));
+    };
 
-    const ageRangeData = Object.entries(ageRangeDistribution)
-      .filter(([key]) => key !== 'not-specified' || ageRangeDistribution[key as keyof typeof ageRangeDistribution] > 0)
-      .map(([key, value]) => ({
-        label: key === '65-plus' ? '65+' : key === 'under-18' ? 'Under 18' : key.replace(/-/g, '-').replace('plus', '+'),
-        value,
-        percentage: totalUsers > 0 ? Math.round((value / totalUsers) * 100) : 0
-      }));
+    // Format age range data for charts
+    const formatAgeRangeData = () => {
+      return Object.entries(ageRangeDistribution)
+        .filter(([key]) => key !== 'not-specified' || ageRangeDistribution[key as keyof typeof ageRangeDistribution] > 0)
+        .map(([key, value]) => ({
+          label: key === '65-plus' ? '65+' : 
+                 key === 'under-18' ? 'Under 18' : 
+                 key.replace(/-/g, '-'),
+          value,
+          percentage: totalNonAdminUsers > 0 ? Math.round((value / totalNonAdminUsers) * 100) : 0
+        }));
+    };
 
     return {
-      totalUsers,
+      totalUsers: totalNonAdminUsers,
       totalCourses,
       totalModules,
       totalLessons,
@@ -148,153 +181,125 @@ const AdminDashboardPage: React.FC = () => {
       averageQuizScore,
       totalLessonCompletions,
       progressDistribution,
-      genderDistribution: genderData,
-      ageRangeDistribution: ageRangeData
+      genderDistribution: formatGenderData(),
+      ageRangeDistribution: formatAgeRangeData()
     };
   }, [courses, registeredUsers, quizAttempts, lessonProgress]);
 
-  const handleCreateInstructorFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setNewInstructorForm({ ...newInstructorForm, [e.target.name]: e.target.value });
-  };
-
-  const handleCreateInstructorSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setFormMessage(null);
-    setIsLoadingAction(true);
-    if (newInstructorForm.password !== newInstructorForm.confirmPassword) {
-      setFormMessage({ type: 'error', text: "Passwords do not match." });
-      setIsLoadingAction(false);
-      return;
-    }
-    const result = addUserByAdmin({
-      username: newInstructorForm.username,
-      email: newInstructorForm.email,
-      password: newInstructorForm.password,
-      role: USER_ROLES.INSTRUCTOR as UserRole,
-    });
-    setFormMessage({ type: result.success ? 'success' : 'error', text: result.message });
-    if (result.success) {
-      setIsCreateInstructorModalOpen(false);
-      setNewInstructorForm({ username: '', email: '', password: '', confirmPassword: '' });
-      alert(result.message);
-    }
-    setIsLoadingAction(false);
-  };
-
-  const handleRoleChange = (userId: string, newRole: UserRole) => {
-    setEditingUserRole({userId, role: newRole});
-  };
-
-  const handleUpdateUserRole = (userId: string) => {
-    if (!editingUserRole || editingUserRole.userId !== userId) return;
-
-    if (!window.confirm(`Are you sure you want to change this user's role to ${editingUserRole.role}?`)) {
-        setEditingUserRole(null);
-        return;
-    }
-
-    setIsLoadingAction(true);
-    const result = updateUserRole(userId, editingUserRole.role);
-    alert(result.message);
-    if (result.success) {
-        setEditingUserRole(null);
-    }
-    setIsLoadingAction(false);
-  };
-
-  const handleDeleteUser = (userId: string, username: string) => {
-    if (window.confirm(`Are you sure you want to delete user "${username}"? This action cannot be undone and will remove all their progress and quiz attempts.`)) {
-      setIsLoadingAction(true);
-      const result = deleteUserByAdmin(userId);
-      alert(result.message);
-      setIsLoadingAction(false);
-    }
-  };
-
+  // Loading state for dynamic import
+  if (typeof window === 'undefined') {
+    return <div className="min-h-screen bg-gray-50 p-8">
+      <div className="animate-pulse">
+        <div className="h-8 bg-gray-200 rounded w-1/3 mb-6"></div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="bg-white p-6 rounded-lg shadow h-32">
+              <div className="h-4 bg-gray-200 rounded w-1/2 mb-4"></div>
+              <div className="h-8 bg-gray-200 rounded w-3/4"></div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-8">
-        <header className="mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold text-gray-900">Admin Dashboard</h1>
-          <p className="text-gray-600 mt-2">Manage your learning platform and users</p>
-        </header>
-
-        {/* Metrics Grid */}
+        <h1 className="text-3xl font-bold mb-8">Admin Dashboard</h1>
+        
+        {/* Analytics Overview */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <MetricCard
-            title="Total Users"
-            value={analytics.totalUsers}
-            icon={<UsersIcon className="w-6 h-6" />}
-            iconBgClass="bg-blue-100 text-blue-600"
+          <div className="bg-white p-6 rounded-lg shadow">
+            <h3 className="text-lg font-semibold mb-2">Total Users</h3>
+            <p className="text-3xl font-bold">{analytics.totalUsers}</p>
+            <p className="text-sm text-gray-500">Non-admin users</p>
+          </div>
+          
+          <div className="bg-white p-6 rounded-lg shadow">
+            <h3 className="text-lg font-semibold mb-2">Total Courses</h3>
+            <p className="text-3xl font-bold">{analytics.totalCourses}</p>
+          </div>
+          
+          <div className="bg-white p-6 rounded-lg shadow">
+            <h3 className="text-lg font-semibold mb-2">Total Lessons</h3>
+            <p className="text-3xl font-bold">{analytics.totalLessons}</p>
+          </div>
+          
+          <div className="bg-white p-6 rounded-lg shadow">
+            <h3 className="text-lg font-semibold mb-2">Quiz Attempts</h3>
+            <p className="text-3xl font-bold">{analytics.totalQuizAttempts}</p>
+            <p className="text-sm text-gray-500">Avg. Score: {analytics.averageQuizScore}</p>
+          </div>
+        </div>
+        
+        {/* Demographic Analytics */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+          <ChartComponent 
+            title="Gender Distribution" 
+            data={analytics.genderDistribution} 
+            type="pie" 
           />
-          <MetricCard
-            title="Total Courses"
-            value={analytics.totalCourses}
-            icon={<AcademicCapIcon className="w-6 h-6" />}
-            iconBgClass="bg-indigo-100 text-indigo-600"
-          />
-          <MetricCard
-            title="Lessons Completed"
-            value={analytics.totalLessonCompletions}
-            icon={<ClipboardDocumentCheckIcon className="w-6 h-6" />}
-            iconBgClass="bg-green-100 text-green-600"
-          />
-          <MetricCard
-            title="Quiz Attempts"
-            value={analytics.totalQuizAttempts}
-            icon={<ClipboardDocumentCheckIcon className="w-6 h-6" />}
-            iconBgClass="bg-purple-100 text-purple-600"
+          <ChartComponent 
+            title="Age Range Distribution" 
+            data={analytics.ageRangeDistribution} 
+            type="bar" 
           />
         </div>
-
-        {/* Content Overview */}
-        <ContentOverview
-          totalModules={analytics.totalModules}
-          totalLessons={analytics.totalLessons}
-          totalQuizzes={analytics.totalQuizzes || 0}
-          totalUsers={analytics.totalUsers}
-        />
-
-        {/* Analytics Charts */}
-        <AnalyticsCharts
-          progressDistribution={analytics.progressDistribution}
-          exportData={exportData}
-          totalQuizAttempts={analytics.totalQuizAttempts}
-          averageQuizScore={analytics.averageQuizScore}
-        />
-
-        {/* Demographic Analytics */}
-        <DemographicAnalytics 
-          genderData={analytics.genderDistribution}
-          ageData={analytics.ageRangeDistribution}
-        />
-
-        {/* User Management */}
-        <UserManagement
-          users={registeredUsers}
-          currentUser={currentUser}
-          onUpdateUserRole={handleUpdateUserRole}
-          onDeleteUser={handleDeleteUser}
-          editingUserRole={editingUserRole}
-          onRoleChange={handleRoleChange}
-          onOpenCreateInstructor={() => {
-            setIsCreateInstructorModalOpen(true);
-            setFormMessage(null);
-          }}
-          isLoadingAction={isLoadingAction}
-        />
-
-        {/* Create Instructor Modal */}
-        <CreateInstructorModal
-          isOpen={isCreateInstructorModalOpen}
-          onClose={() => setIsCreateInstructorModalOpen(false)}
-          formData={newInstructorForm}
-          onFormChange={handleCreateInstructorFormChange}
-          onSubmit={handleCreateInstructorSubmit}
-          formMessage={formMessage}
-          isLoading={isLoadingAction}
-        />
+        
+        {/* Progress Distribution */}
+        <div className="mb-8">
+          <ChartComponent 
+            title="User Progress Distribution" 
+            data={analytics.progressDistribution} 
+            type="bar" 
+          />
+        </div>
+        
+        {/* User Management Section */}
+        <div className="mt-8">
+          <h2 className="text-2xl font-bold mb-4">User Management</h2>
+          <p className="text-gray-600 mb-6">
+            Manage platform users and their roles. Currently showing {analytics.totalUsers} non-admin users.
+          </p>
+          
+          {/* User Statistics */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div className="bg-white p-6 rounded-lg shadow">
+              <h3 className="text-lg font-semibold mb-2">Total Users</h3>
+              <p className="text-3xl font-bold">{analytics.totalUsers}</p>
+              <p className="text-sm text-gray-500">Excluding admins</p>
+            </div>
+            
+            <div className="bg-white p-6 rounded-lg shadow">
+              <h3 className="text-lg font-semibold mb-2">Quiz Attempts</h3>
+              <p className="text-3xl font-bold">{analytics.totalQuizAttempts}</p>
+              <p className="text-sm text-gray-500">Avg. Score: {analytics.averageQuizScore}</p>
+            </div>
+            
+            <div className="bg-white p-6 rounded-lg shadow">
+              <h3 className="text-lg font-semibold mb-2">Lesson Completions</h3>
+              <p className="text-3xl font-bold">{analytics.totalLessonCompletions}</p>
+              <p className="text-sm text-gray-500">Across all courses</p>
+            </div>
+          </div>
+          
+          {/* Note about admin users */}
+          <div className="bg-blue-50 border-l-4 border-blue-400 p-4 mb-8">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-blue-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h2a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <p className="text-sm text-blue-700">
+                  Admin users are excluded from all analytics and user management views. Use the admin panel for admin user management.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
