@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { toast } from 'react-toastify';
 import { USER_ROLES } from '../../constants';
 
-type UserRole = 'Admin' | 'Instructor' | 'Student';
+export type UserRole = 'Admin' | 'Instructor' | 'Student';
 
 export type UserStatus = 'active' | 'suspended';
 
@@ -44,6 +44,31 @@ export const UserManagement: React.FC<UserManagementProps> = ({
   });
   const [isProcessing, setIsProcessing] = useState(false);
 
+  const handleCreateUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newUser.name || !newUser.email) {
+      toast.error('Name and email are required');
+      return;
+    }
+    
+    try {
+      setIsProcessing(true);
+      await onCreateUser({
+        name: newUser.name,
+        email: newUser.email,
+        role: newUser.role,
+      });
+      toast.success('User created successfully');
+      setNewUser({ name: '', email: '', role: USER_ROLES.USER });
+      setShowCreateUserModal(false);
+    } catch (error) {
+      console.error('Error creating user:', error);
+      toast.error('Failed to create user');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   const handleRoleChange = async (userId: string, newRole: UserRole) => {
     try {
       setIsProcessing(true);
@@ -82,23 +107,6 @@ export const UserManagement: React.FC<UserManagementProps> = ({
       } finally {
         setIsProcessing(false);
       }
-    }
-  };
-
-  const handleCreateUser = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      setIsProcessing(true);
-      // TODO: Implement API call to create new user
-      // await createUser(newUser);
-      setShowCreateUserModal(false);
-      setNewUser({ name: '', email: '', role: USER_ROLES.USER });
-      toast.success('User created successfully');
-    } catch (error) {
-      console.error('Error creating user:', error);
-      toast.error('Failed to create user');
-    } finally {
-      setIsProcessing(false);
     }
   };
 

@@ -1,13 +1,13 @@
 import React, { useContext, useMemo, useState } from 'react';
 import { AppContext } from '../App';
 import { USER_ROLES } from '../constants';
-import { UserManagement, User as UserManagementUser } from '../components/admin/UserManagement';
+import { UserManagement, User as UserManagementUser, UserRole } from '../components/admin/UserManagement';
 import { toast } from 'react-toastify';
 import { ChartComponent } from '../components/dashboard/ChartComponent';
 
 // Single source of truth for User type
 type User = UserManagementUser & {
-  role: string;
+  role: UserRole;
   gender?: string;
   ageRange?: string;
   progress?: {
