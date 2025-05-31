@@ -12,6 +12,9 @@ const LoginPage: React.FC = () => {
   const [password, setPassword] = useState('');
 
   const [signupUsername, setSignupUsername] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [middleName, setMiddleName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [signupEmail, setSignupEmail] = useState('');
   const [signupConfirmPassword, setSignupConfirmPassword] = useState('');
   const [gender, setGender] = useState<Gender>('prefer-not-to-say');
@@ -46,8 +49,8 @@ const LoginPage: React.FC = () => {
     e.preventDefault();
     setAuthMessage(null);
 
-    if (!signupUsername.trim() || !signupEmail.trim() || !password.trim() || !signupConfirmPassword.trim()) {
-      setAuthMessage({ type: 'error', text: 'Please fill in all fields for signup.' });
+    if (!signupUsername.trim() || !firstName.trim() || !lastName.trim() || !signupEmail.trim() || !password.trim() || !signupConfirmPassword.trim()) {
+      setAuthMessage({ type: 'error', text: 'Please fill in all required fields for signup.' });
       return;
     }
     if (password !== signupConfirmPassword) {
@@ -63,6 +66,9 @@ const LoginPage: React.FC = () => {
     // Create a user object with all the required fields
     const userData = {
       username: signupUsername,
+      firstName: firstName.trim(),
+      ...(middleName.trim() && { middleName: middleName.trim() }), // Only include if provided
+      lastName: lastName.trim(),
       email: signupEmail,
       password,
       role: USER_ROLES.STUDENT as UserRole,
@@ -90,6 +96,9 @@ const LoginPage: React.FC = () => {
     setIdentifier('');
     setPassword('');
     setSignupUsername('');
+    setFirstName('');
+    setMiddleName('');
+    setLastName('');
     setSignupEmail('');
     setSignupConfirmPassword('');
     setGender('prefer-not-to-say');
@@ -172,9 +181,58 @@ const LoginPage: React.FC = () => {
           </form>
         ) : (
           <form className="mt-8 space-y-6" onSubmit={handleSignupSubmit} noValidate>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="first-name" className="block text-sm font-medium text-neutral-dark mb-1">
+                  First Name *
+                </label>
+                <input
+                  id="first-name"
+                  name="firstName"
+                  type="text"
+                  autoComplete="given-name"
+                  required
+                  className="appearance-none rounded-md relative block w-full px-3 py-3 border border-neutral-medium placeholder-neutral-dark text-neutral-darker focus:outline-none focus:ring-primary focus:border-primary sm:text-sm bg-transparent"
+                  placeholder="First name"
+                  value={firstName}
+                  onChange={handleInputChange(setFirstName)}
+                />
+              </div>
+              <div>
+                <label htmlFor="last-name" className="block text-sm font-medium text-neutral-dark mb-1">
+                  Last Name *
+                </label>
+                <input
+                  id="last-name"
+                  name="lastName"
+                  type="text"
+                  autoComplete="family-name"
+                  required
+                  className="appearance-none rounded-md relative block w-full px-3 py-3 border border-neutral-medium placeholder-neutral-dark text-neutral-darker focus:outline-none focus:ring-primary focus:border-primary sm:text-sm bg-transparent"
+                  placeholder="Last name"
+                  value={lastName}
+                  onChange={handleInputChange(setLastName)}
+                />
+              </div>
+            </div>
+            <div>
+              <label htmlFor="middle-name" className="block text-sm font-medium text-neutral-dark mb-1">
+                Middle Name (Optional)
+              </label>
+              <input
+                id="middle-name"
+                name="middleName"
+                type="text"
+                autoComplete="additional-name"
+                className="appearance-none rounded-md relative block w-full px-3 py-3 border border-neutral-medium placeholder-neutral-dark text-neutral-darker focus:outline-none focus:ring-primary focus:border-primary sm:text-sm bg-transparent"
+                placeholder="Middle name (optional)"
+                value={middleName}
+                onChange={handleInputChange(setMiddleName)}
+              />
+            </div>
             <div>
               <label htmlFor="username-signup" className="block text-sm font-medium text-neutral-dark mb-1">
-                Username
+                Username *
               </label>
               <input
                 id="username-signup"
