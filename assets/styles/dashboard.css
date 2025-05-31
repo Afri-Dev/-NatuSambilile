@@ -1,0 +1,50 @@
+:root {
+  --primary: #2563eb;
+  --primary-dark: #1d4ed8;
+  --primary-light: #60a5fa;
+  --primary-lighter: #bfdbfe;
+  
+  --accent: #10b981;
+  --accent-dark: #059669;
+  --accent-light: #34d399;
+  
+  --secondary: #f59e0b;
+  --secondary-dark: #d97706;
+  --secondary-light: #fbbf24;
+  
+  --neutral-dark: #1f2937;
+  --neutral-darker: #111827;
+  --neutral-medium: #4b5563;
+  --neutral-light: #9ca3af;
+  --neutral-lighter: #d1d5db;
+  --neutral-lightest: #f3f4f6;
+  
+  --success-dark: #15803d;
+  --success-light: #34d399;
+  
+  --error-dark: #dc2626;
+  --error-light: #f87171;
+  
+  --bg-primary: #2563eb;
+  --bg-accent: #10b981;
+  --bg-secondary: #f59e0b;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--neutral-lightest);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--neutral-light);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--neutral-medium);
+}

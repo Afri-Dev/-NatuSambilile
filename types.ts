@@ -68,12 +68,23 @@ export interface GroundingMetadata {
 // --- User Authentication and Roles ---
 export type UserRole = 'Admin' | 'Instructor' | 'Student';
 
+export interface UserProgress {
+  percentage: number;
+  completedLessons: string[];
+  lastAccessed?: string;
+}
+
 export interface User {
   id: string;
   username: string;
   email: string; 
   password?: string; // Plain text for demo purposes
   role: UserRole;
+  lastLogin?: string; // ISO date string of last login
+  createdAt?: string; // ISO date string of account creation
+  courses?: string[]; // Array of course IDs the user is enrolled in
+  quizAttempts?: QuizAttempt[]; // User's quiz attempts
+  progress?: UserProgress; // User's learning progress
 }
 
 // --- Quiz Attempts ---

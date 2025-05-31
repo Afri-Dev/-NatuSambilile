@@ -5,6 +5,11 @@ import { Course, User, UserRole } from '../types';
 import { USER_ROLES, UsersIcon, AcademicCapIcon, ClipboardDocumentCheckIcon, ListBulletIcon, UserPlusIcon, TrashIcon, ShieldCheckIcon, KeyIcon, EditIcon, UserMinusIcon } from '../constants';
 import Modal from '../components/common/Modal';
 import LoadingSpinner from '../components/common/LoadingSpinner';
+import { Line, Bar } from 'react-chartjs-2';
+import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend } from 'chart.js';
+import { saveAs } from 'file-saver';
+import { CSVLink } from 'react-csv';
+import { format } from 'date-fns';
 
 interface MetricCardProps {
   title: string;
@@ -35,18 +40,54 @@ const AdminDashboardPage: React.FC = () => {
     currentUser, addUserByAdmin, updateUserRole, deleteUserByAdmin
   } = appContext;
 
+  // Initialize Chart.js
+  ChartJS.register(
+    CategoryScale,
+    LinearScale,
+    PointElement,
+    LineElement,
+    BarElement,
+    Title,
+    Tooltip,
+    Legend
+  );
+
+  // Analytics data preparation
+  const [exportData, setExportData] = useState<any[]>([]);
+
+  useEffect(() => {
+    // Prepare data for CSV export
+    const data = registeredUsers.map(user => {
+      // Safely format dates, providing a fallback for missing dates
+      const registrationDate = user.createdAt ? 
+        format(new Date(user.createdAt), 'yyyy-MM-dd HH:mm') : 'N/A';
+      const lastLogin = user.lastLogin ? 
+        format(new Date(user.lastLogin), 'yyyy-MM-dd HH:mm') : 'Never';
+      
+      return {
+        Username: user.username,
+        Email: user.email,
+        Role: user.role,
+        RegistrationDate: registrationDate,
+        LastLogin: lastLogin,
+        CoursesEnrolled: user.courses?.length || 0,
+        QuizzesCompleted: user.quizAttempts?.length || 0,
+        Progress: user.progress?.percentage || 0
+      };
+    });
+    setExportData(data);
+  }, [registeredUsers]);
+
   const [isCreateInstructorModalOpen, setIsCreateInstructorModalOpen] = useState(false);
   const [newInstructorForm, setNewInstructorForm] = useState({ username: '', email: '', password: '', confirmPassword: '' });
   const [formMessage, setFormMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [isLoadingAction, setIsLoadingAction] = useState(false);
-
   const [editingUserRole, setEditingUserRole] = useState<{ userId: string; role: UserRole } | null>(null);
 
-
+  // Analytics data
   const analytics = useMemo(() => {
     const totalUsers = registeredUsers.length;
     const totalCourses = courses.length;
-
     const totalModules = courses.reduce((sum, course) => sum + course.modules.length, 0);
     const totalLessons = courses.reduce((sum, course) =>
       sum + course.modules.reduce((modSum, mod) => modSum + mod.lessons.length, 0), 0);
@@ -60,6 +101,22 @@ const AdminDashboardPage: React.FC = () => {
 
     const totalLessonCompletions = lessonProgress.length;
 
+    // Get user progress distribution
+    const progressDistribution = [
+      { label: '0-25%', value: 0 },
+      { label: '26-50%', value: 0 },
+      { label: '51-75%', value: 0 },
+      { label: '76-100%', value: 0 }
+    ];
+
+    registeredUsers.forEach(user => {
+      const progress = user.progress?.percentage || 0;
+      if (progress <= 25) progressDistribution[0].value++;
+      else if (progress <= 50) progressDistribution[1].value++;
+      else if (progress <= 75) progressDistribution[2].value++;
+      else progressDistribution[3].value++;
+    });
+
     return {
       totalUsers,
       totalCourses,
@@ -69,8 +126,9 @@ const AdminDashboardPage: React.FC = () => {
       totalQuizAttempts,
       averageQuizScore,
       totalLessonCompletions,
+      progressDistribution
     };
-  }, [courses, registeredUsers, quizAttempts, lessonProgress]); // Ensured this dependency array is correctly formatted
+  }, [courses, registeredUsers, quizAttempts, lessonProgress]);
 
   const handleCreateInstructorFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setNewInstructorForm({ ...newInstructorForm, [e.target.name]: e.target.value });
@@ -163,20 +221,59 @@ const AdminDashboardPage: React.FC = () => {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
           <div><p className="text-3xl font-bold text-accent-dark">{analytics.totalModules}</p><p className="text-neutral-dark">Modules</p></div>
           <div><p className="text-3xl font-bold text-accent-dark">{analytics.totalLessons}</p><p className="text-neutral-dark">Lessons</p></div>
-          <div><p className="text-3xl font-bold text-accent-dark">{analytics.totalQuizzes}</p><p className="text-neutral-dark">Quizzes</p></div>
-           <div><p className="text-3xl font-bold text-accent-dark">{analytics.totalCourses}</p><p className="text-neutral-dark">Courses</p></div>
         </div>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         <div className="bg-white p-6 rounded-xl shadow-lg">
-            <h2 className="text-2xl font-semibold text-primary-dark mb-4">Quiz Engagement</h2>
-            <div className="space-y-3">
-                <div className="flex justify-between items-center"><p className="text-neutral-dark">Total Quiz Attempts:</p><p className="font-semibold text-lg text-primary">{analytics.totalQuizAttempts}</p></div>
-                <div className="flex justify-between items-center"><p className="text-neutral-dark">Average Quiz Score:</p><p className="font-semibold text-lg text-primary">{analytics.averageQuizScore}</p></div>
-            </div>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-xl font-semibold text-primary-dark">User Progress Distribution</h3>
+            <CSVLink
+              data={exportData}
+              filename={`user-data-${format(new Date(), 'yyyy-MM-dd')}.csv`}
+              className="text-sm text-primary hover:text-primary-dark transition-colors"
+            >
+              <button className="flex items-center space-x-1">
+                <span>Export Data</span>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                </svg>
+              </button>
+            </CSVLink>
+          </div>
+          <Bar
+            data={{
+              labels: analytics.progressDistribution.map(item => item.label),
+              datasets: [{
+                label: 'Users',
+                data: analytics.progressDistribution.map(item => item.value),
+                backgroundColor: [
+                  'rgba(59, 130, 246, 0.7)',
+                  'rgba(107, 194, 255, 0.7)',
+                  'rgba(165, 213, 255, 0.7)',
+                  'rgba(214, 234, 255, 0.7)',
+                ],
+                borderColor: 'rgb(59, 130, 246)',
+                borderWidth: 1
+              }]
+            }}
+            options={{
+              responsive: true,
+              scales: {
+                y: {
+                  beginAtZero: true
+                }
+              }
+            }}
+          />
         </div>
+
         <div className="bg-white p-6 rounded-xl shadow-lg">
-            <h2 className="text-2xl font-semibold text-primary-dark mb-4">User Roles Breakdown</h2>
+          <h3 className="text-xl font-semibold text-primary-dark mb-4">Quiz Engagement</h3>
+          <div className="space-y-3">
+            <div className="flex justify-between items-center"><p className="text-neutral-dark">Total Quiz Attempts:</p><p className="font-semibold text-lg text-primary">{analytics.totalQuizAttempts}</p></div>
+            <div className="flex justify-between items-center"><p className="text-neutral-dark">Average Quiz Score:</p><p className="font-semibold text-lg text-primary">{analytics.averageQuizScore}</p></div>
+          </div>
             <div className="space-y-2">
                 {Object.values(USER_ROLES).map(role => (
                     <div key={role} className="flex justify-between items-center">
@@ -259,22 +356,24 @@ const AdminDashboardPage: React.FC = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
                       {canManageUser ? (
                         <>
-                          <button
-                            onClick={() => handleUpdateUserRole(user.id)}
-                            className="text-primary hover:text-primary-dark disabled:opacity-50 transition-colors"
-                            disabled={isUpdateRoleDisabled}
-                            title="Update Role"
-                          >
-                            <EditIcon className="w-5 h-5"/>
-                          </button>
-                          <button
-                            onClick={() => handleDeleteUser(user.id, user.username)}
-                            className="text-error hover:text-error-dark disabled:opacity-50 transition-colors"
-                            disabled={isLoadingAction}
-                            title="Delete User"
-                          >
-                            <UserMinusIcon className="w-5 h-5"/>
-                          </button>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleUpdateUserRole(user.id)}
+                              className="p-1.5 rounded-full bg-neutral-light/50 hover:bg-neutral-light/70 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed group"
+                              disabled={isUpdateRoleDisabled}
+                              title="Update Role"
+                            >
+                              <EditIcon className="w-5 h-5 text-primary group-hover:scale-110 transition-transform"/>
+                            </button>
+                            <button
+                              onClick={() => handleDeleteUser(user.id, user.username)}
+                              className="p-1.5 rounded-full bg-neutral-light/50 hover:bg-neutral-light/70 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed group"
+                              disabled={isLoadingAction}
+                              title="Delete User"
+                            >
+                              <UserMinusIcon className="w-5 h-5 text-error group-hover:scale-110 transition-transform"/>
+                            </button>
+                          </div>
                         </>
                       ) : (
                         <span className="text-xs text-neutral-dark italic">
