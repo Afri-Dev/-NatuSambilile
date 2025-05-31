@@ -11,6 +11,7 @@ import { ContentOverview } from '../components/dashboard/ContentOverview';
 import AnalyticsCharts from '../components/dashboard/AnalyticsCharts';
 import { UserManagement } from '../components/dashboard/UserManagement';
 import { CreateInstructorModal } from '../components/dashboard/CreateInstructorModal';
+import DemographicAnalytics from '../components/dashboard/DemographicAnalytics';
 
 const AdminDashboardPage: React.FC = () => {
   const appContext = useContext(AppContext);
@@ -77,13 +78,65 @@ const AdminDashboardPage: React.FC = () => {
       { label: '76-100%', value: 0 }
     ];
 
+    // Gender distribution
+    const genderDistribution = {
+      male: 0,
+      female: 0,
+      other: 0,
+      'prefer-not-to-say': 0
+    };
+
+    // Age range distribution
+    const ageRangeDistribution = {
+      'under-18': 0,
+      '18-24': 0,
+      '25-34': 0,
+      '35-44': 0,
+      '45-54': 0,
+      '55-64': 0,
+      '65-plus': 0,
+      'not-specified': 0
+    };
+
     registeredUsers.forEach(user => {
+      // Progress distribution
       const progress = user.progress?.percentage || 0;
       if (progress <= 25) progressDistribution[0].value++;
       else if (progress <= 50) progressDistribution[1].value++;
       else if (progress <= 75) progressDistribution[2].value++;
       else progressDistribution[3].value++;
+
+      // Gender distribution
+      const gender = user.gender || 'not-specified';
+      if (gender in genderDistribution) {
+        genderDistribution[gender as keyof typeof genderDistribution]++;
+      } else {
+        genderDistribution.other++;
+      }
+
+      // Age range distribution
+      const ageRange = user.ageRange || 'not-specified';
+      if (ageRange in ageRangeDistribution) {
+        ageRangeDistribution[ageRange as keyof typeof ageRangeDistribution]++;
+      } else {
+        ageRangeDistribution['not-specified']++;
+      }
     });
+
+    // Convert to array for charts
+    const genderData = Object.entries(genderDistribution).map(([key, value]) => ({
+      label: key.charAt(0).toUpperCase() + key.slice(1).replace(/-/g, ' '),
+      value,
+      percentage: totalUsers > 0 ? Math.round((value / totalUsers) * 100) : 0
+    }));
+
+    const ageRangeData = Object.entries(ageRangeDistribution)
+      .filter(([key]) => key !== 'not-specified' || ageRangeDistribution[key as keyof typeof ageRangeDistribution] > 0)
+      .map(([key, value]) => ({
+        label: key === '65-plus' ? '65+' : key === 'under-18' ? 'Under 18' : key.replace(/-/g, '-').replace('plus', '+'),
+        value,
+        percentage: totalUsers > 0 ? Math.round((value / totalUsers) * 100) : 0
+      }));
 
     return {
       totalUsers,
@@ -94,7 +147,9 @@ const AdminDashboardPage: React.FC = () => {
       totalQuizAttempts,
       averageQuizScore,
       totalLessonCompletions,
-      progressDistribution
+      progressDistribution,
+      genderDistribution: genderData,
+      ageRangeDistribution: ageRangeData
     };
   }, [courses, registeredUsers, quizAttempts, lessonProgress]);
 
@@ -207,6 +262,12 @@ const AdminDashboardPage: React.FC = () => {
           exportData={exportData}
           totalQuizAttempts={analytics.totalQuizAttempts}
           averageQuizScore={analytics.averageQuizScore}
+        />
+
+        {/* Demographic Analytics */}
+        <DemographicAnalytics 
+          genderData={analytics.genderDistribution}
+          ageData={analytics.ageRangeDistribution}
         />
 
         {/* User Management */}
