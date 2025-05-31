@@ -75,6 +75,8 @@ const App: React.FC = () => {
       const defaultAdmin: User = {
         id: crypto.randomUUID(),
         username: 'admin',
+        firstName: 'Admin',
+        lastName: 'User',
         email: 'NatuSambilileadmin@gmail.com',
         password: '12345qwert', 
         role: USER_ROLES.ADMIN as UserRole,
@@ -95,10 +97,10 @@ const App: React.FC = () => {
   };
 
   const register = (userData: Omit<User, 'id' | 'lastLogin' | 'createdAt'>): { success: boolean; message?: string } => {
-    const { username, email, password, role, gender, ageRange } = userData;
+    const { username, email, password, role, gender, ageRange, firstName, lastName } = userData;
     
-    if (!username.trim() || !email.trim() || !password || !role) {
-      return { success: false, message: "All required fields must be provided for registration." };
+    if (!username.trim() || !email.trim() || !password || !role || !firstName?.trim() || !lastName?.trim()) {
+      return { success: false, message: "All required fields (username, email, password, first name, last name, role) must be provided for registration." };
     }
     
     if (!/\S+@\S+\.\S+/.test(email)) {
@@ -116,11 +118,14 @@ const App: React.FC = () => {
     const newUser: User = {
       id: crypto.randomUUID(),
       username,
+      firstName: firstName || '',
+      lastName: lastName || '',
       email,
       password, // Storing plain text password for demo
       role,
       gender,
       ageRange,
+      lastLogin: new Date().toISOString(),
       createdAt: new Date().toISOString(),
       courses: [],
       quizAttempts: []
@@ -389,11 +394,11 @@ const App: React.FC = () => {
     if (!currentUser || currentUser.role !== USER_ROLES.ADMIN) {
       return { success: false, message: "Unauthorized action." };
     }
-    if (!userData.username.trim() || !userData.email.trim() || !userData.password?.trim() || !userData.role) {
-      return { success: false, message: "All fields (username, email, password, role) are required." };
+    if (!userData.username.trim() || !userData.email.trim() || !userData.password?.trim() || !userData.role || !userData.firstName.trim() || !userData.lastName.trim()) {
+      return { success: false, message: "All fields (username, email, password, first name, last name, role) are required." };
     }
     if (!/\S+@\S+\.\S+/.test(userData.email)) {
-        return { success: false, message: 'Invalid email format.' };
+      return { success: false, message: 'Invalid email format.' };
     }
     const existingUser = registeredUsers.find(
       u => u.username.toLowerCase() === userData.username.toLowerCase() || u.email.toLowerCase() === userData.email.toLowerCase()
@@ -403,10 +408,21 @@ const App: React.FC = () => {
     }
     const newUser: User = {
       id: crypto.randomUUID(),
-      ...userData,
+      username: userData.username,
+      firstName: userData.firstName,
+      lastName: userData.lastName,
+      email: userData.email,
+      password: userData.password,
+      role: userData.role,
+      gender: userData.gender,
+      ageRange: userData.ageRange,
+      lastLogin: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
+      courses: [],
+      quizAttempts: []
     };
     setRegisteredUsers(prev => [...prev, newUser]);
-    return { success: true, message: `${newUser.role} "${newUser.username}" created successfully.` };
+    return { success: true, message: `${newUser.role} "${newUser.firstName} ${newUser.lastName}" (${newUser.username}) created successfully.` };
   };
 
   const updateUserRole = (targetUserId: string, newRole: UserRole): { success: boolean; message: string } => {

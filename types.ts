@@ -80,6 +80,8 @@ export type AgeRange = 'under-18' | '18-24' | '25-34' | '35-44' | '45-54' | '55-
 export interface User {
   id: string;
   username: string;
+  firstName: string;
+  lastName: string;
   email: string; 
   password?: string; // Plain text for demo purposes
   role: UserRole;

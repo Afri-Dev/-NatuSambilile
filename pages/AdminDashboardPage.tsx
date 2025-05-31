@@ -12,8 +12,15 @@ interface User {
   gender?: string;
   ageRange?: string;
   password?: string;
+  createdAt: string; // ISO date string
+  lastLogin?: string; // ISO date string
   progress?: {
     percentage: number;
+    lastUpdated?: string;
+  };
+  activity?: {
+    totalLogins: number;
+    lastSessionDuration?: number; // in minutes
   };
 }
 
@@ -37,17 +44,34 @@ interface LessonProgress {
 
 
 interface AnalyticsData {
+  // Basic metrics
   totalUsers: number;
+  activeUsers: number;
+  newUsers: number;
   totalCourses: number;
   totalModules: number;
   totalLessons: number;
   totalQuizzes: number;
+  
+  // User engagement
   totalQuizAttempts: number;
   averageQuizScore: string;
   totalLessonCompletions: number;
+  averageSessionDuration: string;
+  
+  // User acquisition
+  signupsByDate: Array<{ date: string; count: number }>;
+  signupsByMonth: Array<{ month: string; count: number }>;
+  
+  // User activity
+  activeUsersByDay: Array<{ day: string; count: number }>;
+  userRetention: number;
+  
+  // Distributions
   progressDistribution: ChartItem[];
   genderDistribution: ChartItem[];
   ageRangeDistribution: ChartItem[];
+  userSignupTimeline: Array<{ date: string; count: number }>;
 }
 
 const AdminDashboardPage = () => {
@@ -59,6 +83,8 @@ const AdminDashboardPage = () => {
 
   const [newUser, setNewUser] = useState<{
     username: string;
+    firstName: string;
+    lastName: string;
     email: string;
     password: string;
     role: 'Admin' | 'Instructor' | 'Student';
@@ -66,6 +92,8 @@ const AdminDashboardPage = () => {
     ageRange: string;
   }>({
     username: '',
+    firstName: '',
+    lastName: '',
     email: '',
     password: 'defaultPassword123',
     role: 'Instructor',
@@ -81,9 +109,17 @@ const AdminDashboardPage = () => {
       // Create a user object that matches the expected type for addUserByAdmin
       const userToCreate = {
         username: newUser.username,
+        firstName: newUser.firstName,
+        lastName: newUser.lastName,
         email: newUser.email,
         password: newUser.password,
-        role: newUser.role as 'Admin' | 'Instructor' | 'Student'
+        role: newUser.role as 'Admin' | 'Instructor' | 'Student',
+        createdAt: new Date().toISOString(),
+        lastLogin: new Date().toISOString(),
+        activity: {
+          totalLogins: 1,
+          lastSessionDuration: 0
+        }
       };
       const result = appContext.addUserByAdmin(userToCreate);
       
@@ -91,6 +127,8 @@ const AdminDashboardPage = () => {
         toast.success('User created successfully!');
         setNewUser({
           username: '',
+          firstName: '',
+          lastName: '',
           email: '',
           password: 'defaultPassword123',
           role: 'Instructor' as const,  // Use 'as const' to ensure type safety
@@ -270,18 +308,82 @@ const AdminDashboardPage = () => {
         }));
     };
 
+    // Calculate signups by date (last 30 days)
+    const signupsByDateMap = new Map<string, number>();
+    const signupsByMonthMap = new Map<string, number>();
+    
+    nonAdminUsers.forEach(user => {
+      // Use current date as fallback if createdAt is missing or invalid
+      const date = user.createdAt ? new Date(user.createdAt) : new Date();
+      // Check if date is valid
+      const isValidDate = !isNaN(date.getTime());
+      const dateToUse = isValidDate ? date : new Date();
+      
+      const dateStr = dateToUse.toISOString().split('T')[0];
+      const monthStr = dateToUse.toLocaleString('default', { month: 'short', year: 'numeric' });
+      
+      signupsByDateMap.set(dateStr, (signupsByDateMap.get(dateStr) || 0) + 1);
+      signupsByMonthMap.set(monthStr, (signupsByMonthMap.get(monthStr) || 0) + 1);
+    });
+    
+    // Convert maps to arrays for charts
+    const signupsByDate = Array.from(signupsByDateMap.entries())
+      .map(([date, count]) => ({ date, count }))
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+      
+    const signupsByMonth = Array.from(signupsByMonthMap.entries())
+      .map(([month, count]) => ({ month, count }))
+      .sort((a, b) => new Date(`01 ${a.month}`).getTime() - new Date(`01 ${b.month}`).getTime());
+    
+    // Calculate date range for new and active users (last 30 days)
+    const now = new Date();
+    const thirtyDaysAgo = new Date(now);
+    thirtyDaysAgo.setDate(now.getDate() - 30);
+    
+    // Calculate active users (logged in within last 30 days)
+    const activeUsers = nonAdminUsers.filter(user => 
+      user.lastLogin && new Date(user.lastLogin) > thirtyDaysAgo
+    ).length;
+    
+    // Calculate new users (signed up in the last 30 days)
+    const newUsers = nonAdminUsers.filter(user => 
+      user.createdAt && new Date(user.createdAt) > thirtyDaysAgo
+    ).length;
+    
+    // Calculate user retention (simplified)
+    const userRetention = totalNonAdminUsers > 0 
+      ? Math.round((activeUsers / totalNonAdminUsers) * 100) 
+      : 0;
+    
     return {
+      // Basic metrics
       totalUsers: totalNonAdminUsers,
+      activeUsers,
+      newUsers,
       totalCourses,
       totalModules,
       totalLessons,
       totalQuizzes,
+      
+      // Engagement metrics
       totalQuizAttempts,
       averageQuizScore,
       totalLessonCompletions,
+      averageSessionDuration: '15 min', // This would come from actual session data
+      
+      // User acquisition
+      signupsByDate,
+      signupsByMonth,
+      
+      // User activity
+      activeUsersByDay: [], // This would be populated with actual data
+      userRetention,
+      
+      // Distributions
       progressDistribution,
       genderDistribution: formatGenderData(),
-      ageRangeDistribution: formatAgeRangeData()
+      ageRangeDistribution: formatAgeRangeData(),
+      userSignupTimeline: signupsByDate
     };
   }, [users, courses]);
 
@@ -309,14 +411,26 @@ const AdminDashboardPage = () => {
           <h1 className="text-3xl font-bold mb-8">Admin Dashboard</h1>
           
           {/* Analytics Overview */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <div className="bg-white p-6 rounded-lg shadow">
               <h3 className="text-lg font-semibold mb-2">Total Users</h3>
               <p className="text-3xl font-bold">{analytics.totalUsers}</p>
+              <p className="text-sm text-gray-500">{analytics.newUsers} new this month</p>
+            </div>
+            <div className="bg-white p-6 rounded-lg shadow">
+              <h3 className="text-lg font-semibold mb-2">Active Users</h3>
+              <p className="text-3xl font-bold">{analytics.activeUsers}</p>
+              <p className="text-sm text-gray-500">{analytics.userRetention}% retention</p>
             </div>
             <div className="bg-white p-6 rounded-lg shadow">
               <h3 className="text-lg font-semibold mb-2">Total Courses</h3>
               <p className="text-3xl font-bold">{analytics.totalCourses}</p>
+              <p className="text-sm text-gray-500">{analytics.totalModules} modules</p>
+            </div>
+            <div className="bg-white p-6 rounded-lg shadow">
+              <h3 className="text-lg font-semibold mb-2">Engagement</h3>
+              <p className="text-xl font-bold">{analytics.averageSessionDuration} avg. session</p>
+              <p className="text-sm text-gray-500">{analytics.totalQuizAttempts} quiz attempts</p>
             </div>
           </div>
           
@@ -338,23 +452,27 @@ const AdminDashboardPage = () => {
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Username</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {users.map((user) => (
                     <tr key={user.id}>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">{user.username}</div>
+                        <div className="text-sm font-medium text-gray-900">{user.firstName} {user.lastName}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-500">{user.email}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                        <div className="text-sm text-gray-500">{user.username}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${user.role === 'Admin' ? 'bg-purple-100 text-purple-800' : user.role === 'Instructor' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}`}>
                           {user.role}
                         </span>
                       </td>
@@ -387,19 +505,114 @@ const AdminDashboardPage = () => {
         
 
         
-        {/* Demographic Analytics */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-          <ChartComponent 
-            title="Gender Distribution" 
-            data={analytics.genderDistribution} 
-            type="pie" 
-          />
-          <ChartComponent 
-            title="Age Range Distribution" 
-            data={analytics.ageRangeDistribution} 
-            type="bar" 
-          />
-        </div>
+        {/* User Growth & Analytics */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <div className="bg-white p-6 rounded-lg shadow">
+              <h3 className="text-lg font-semibold mb-4">User Signups (Last 30 Days)</h3>
+              <div className="h-64">
+                <ChartComponent 
+                  title="" 
+                  data={analytics.signupsByDate.map(item => ({
+                    label: new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+                    value: item.count
+                  }))} 
+                  type="bar"
+                />
+              </div>
+            </div>
+            <div className="grid grid-rows-2 gap-6">
+              <div className="bg-white p-6 rounded-lg shadow">
+                <h3 className="text-lg font-semibold mb-4">Demographics</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-500 mb-2">Gender</h4>
+                    <ChartComponent 
+                      title="" 
+                      data={analytics.genderDistribution} 
+                      type="pie"
+                    />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-500 mb-2">Age Range</h4>
+                    <ChartComponent 
+                      title="" 
+                      data={analytics.ageRangeDistribution} 
+                      type="pie"
+                    />
+                  </div>
+                </div>
+              </div>
+              <div className="bg-white p-6 rounded-lg shadow">
+                <h3 className="text-lg font-semibold mb-2">User Activity</h3>
+                <div className="grid grid-cols-3 gap-4 text-center">
+                  <div>
+                    <div className="text-2xl font-bold">{analytics.totalQuizAttempts}</div>
+                    <div className="text-sm text-gray-500">Quiz Attempts</div>
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold">{analytics.totalLessonCompletions}</div>
+                    <div className="text-sm text-gray-500">Lessons Completed</div>
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold">{analytics.averageSessionDuration}</div>
+                    <div className="text-sm text-gray-500">Avg. Session</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {/* User Signup Timeline */}
+          <div className="bg-white p-6 rounded-lg shadow mb-8">
+            <h3 className="text-lg font-semibold mb-4">User Signup Timeline</h3>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">User</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Signup Date</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Last Active</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {users.slice(0, 5).map((user) => (
+                    <tr key={user.id}>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-900">{user.firstName} {user.lastName}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {user.email}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                          user.role === 'Admin' ? 'bg-purple-100 text-purple-800' :
+                          user.role === 'Instructor' ? 'bg-blue-100 text-blue-800' :
+                          'bg-green-100 text-green-800'
+                        }`}>
+                          {user.role}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {user.lastLogin ? new Date(user.lastLogin).toLocaleString() : 'Never'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {users.length > 5 && (
+              <div className="mt-4 text-center">
+                <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                  View All Users
+                </button>
+              </div>
+            )}
+          </div>
 
       </div>
       
@@ -417,46 +630,69 @@ const AdminDashboardPage = () => {
               </button>
             </div>
             <form onSubmit={handleCreateUser}>
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Username
-                </label>
-                <input
-                  type="text"
-                  value={newUser.username}
-                  onChange={(e) => setNewUser({...newUser, username: e.target.value})}
-                  className="w-full p-2 border rounded"
-                  required
-                />
-              </div>
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Email
-                </label>
-                <input
-                  type="email"
-                  value={newUser.email}
-                  onChange={(e) => setNewUser({...newUser, email: e.target.value})}
-                  className="w-full p-2 border rounded"
-                  required
-                />
-              </div>
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Role
-                </label>
-                <select
-                  value={newUser.role}
-                  onChange={(e) => setNewUser({
-                    ...newUser, 
-                    role: e.target.value as 'Admin' | 'Instructor' | 'Student'
-                  })}
-                  className="w-full p-2 border rounded"
-                  required
-                >
-                  <option value="Instructor">Instructor</option>
-                  <option value="Student">Student</option>
-                </select>
+              <div className="grid grid-cols-1 gap-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="firstName" className="block text-sm font-medium text-gray-700">First Name</label>
+                    <input
+                      type="text"
+                      id="firstName"
+                      value={newUser.firstName}
+                      onChange={(e) => setNewUser({...newUser, firstName: e.target.value})}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="lastName" className="block text-sm font-medium text-gray-700">Last Name</label>
+                    <input
+                      type="text"
+                      id="lastName"
+                      value={newUser.lastName}
+                      onChange={(e) => setNewUser({...newUser, lastName: e.target.value})}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                      required
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label htmlFor="username" className="block text-sm font-medium text-gray-700">Username</label>
+                  <input
+                    type="text"
+                    id="username"
+                    value={newUser.username}
+                    onChange={(e) => setNewUser({...newUser, username: e.target.value})}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    required
+                  />
+                </div>
+                <div>
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
+                  <input
+                    type="email"
+                    id="email"
+                    value={newUser.email}
+                    onChange={(e) => setNewUser({...newUser, email: e.target.value})}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    required
+                  />
+                </div>
+                <div>
+                  <label htmlFor="role" className="block text-sm font-medium text-gray-700">Role</label>
+                  <select
+                    id="role"
+                    value={newUser.role}
+                    onChange={(e) => setNewUser({
+                      ...newUser, 
+                      role: e.target.value as 'Admin' | 'Instructor' | 'Student'
+                    })}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    required
+                  >
+                    <option value="Instructor">Instructor</option>
+                    <option value="Student">Student</option>
+                  </select>
+                </div>
               </div>
               <div className="flex justify-end space-x-3 mt-6">
                 <button
