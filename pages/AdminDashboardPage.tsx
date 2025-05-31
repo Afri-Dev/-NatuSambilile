@@ -1,19 +1,21 @@
 import React, { useContext, useMemo, useState } from 'react';
 import { AppContext } from '../App';
-import { USER_ROLES } from '../constants';
-import { UserManagement, User as UserManagementUser, UserRole } from '../components/admin/UserManagement';
 import { toast } from 'react-toastify';
+import { USER_ROLES } from '../constants';
 import { ChartComponent } from '../components/dashboard/ChartComponent';
 
-// Single source of truth for User type
-type User = UserManagementUser & {
-  role: UserRole;
+interface User {
+  id: string;
+  username: string;
+  email: string;
+  role: string;
   gender?: string;
   ageRange?: string;
+  password?: string;
   progress?: {
     percentage: number;
   };
-};
+}
 
 // Type for the chart data items
 interface ChartItem {
@@ -55,27 +57,64 @@ const AdminDashboardPage = () => {
   const [showCreateUserModal, setShowCreateUserModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  // User Management Handlers
-  const handleUpdateUser = async (userId: string, updates: Partial<User>) => {
+  const [newUser, setNewUser] = useState<{
+    username: string;
+    email: string;
+    password: string;
+    role: 'Admin' | 'Instructor' | 'Student';
+    gender: string;
+    ageRange: string;
+  }>({
+    username: '',
+    email: '',
+    password: 'defaultPassword123',
+    role: 'Instructor',
+    gender: 'other',
+    ageRange: '25-34'
+  });
+
+  // Handle creating a new user
+  const handleCreateUser = async (e: React.FormEvent) => {
+    e.preventDefault();
     try {
       setIsLoading(true);
-      // TODO: Implement API call to update user
-      console.log('Updating user:', userId, updates);
-      toast.success('User updated successfully');
+      // Create a user object that matches the expected type for addUserByAdmin
+      const userToCreate = {
+        username: newUser.username,
+        email: newUser.email,
+        password: newUser.password,
+        role: newUser.role as 'Admin' | 'Instructor' | 'Student'
+      };
+      const result = appContext.addUserByAdmin(userToCreate);
+      
+      if (result.success) {
+        toast.success('User created successfully!');
+        setNewUser({
+          username: '',
+          email: '',
+          password: 'defaultPassword123',
+          role: 'Instructor' as const,  // Use 'as const' to ensure type safety
+          gender: 'other',
+          ageRange: '25-34'
+        });
+        setShowCreateUserModal(false);
+      } else {
+        throw new Error(result.message);
+      }
     } catch (error) {
-      console.error('Error updating user:', error);
-      toast.error('Failed to update user');
+      console.error('Error creating user:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to create user');
     } finally {
       setIsLoading(false);
     }
   };
 
+  // Handle deleting a user
   const handleDeleteUser = async (userId: string) => {
     if (window.confirm('Are you sure you want to delete this user?')) {
       try {
         setIsLoading(true);
-        // TODO: Implement API call to delete user
-        console.log('Deleting user:', userId);
+        appContext.deleteUserByAdmin(userId);
         toast.success('User deleted successfully');
       } catch (error) {
         console.error('Error deleting user:', error);
@@ -85,34 +124,20 @@ const AdminDashboardPage = () => {
       }
     }
   };
-
-  const handleCreateUser = async (userData: Omit<User, 'id' | 'status'>) => {
-    try {
-      setIsLoading(true);
-      // TODO: Implement API call to create user
-      console.log('Creating user:', userData);
-      setShowCreateUserModal(false);
-      toast.success('User created successfully');
-    } catch (error) {
-      console.error('Error creating user:', error);
-      toast.error('Failed to create user');
-    } finally {
-      setIsLoading(false);
-    }
-  };
   
-  // Safely destructure with default values to prevent undefined errors
-  const { 
-    courses = [], 
-    registeredUsers: allUsers = [], 
-    currentUser 
-  } = appContext;
+  // Get unique users (filter duplicates by email)
+  const users = useMemo(() => {
+    const seen = new Set();
+    return appContext.registeredUsers
+      .filter(user => user.role !== 'Admin') // Exclude admin users
+      .filter(user => {
+        const duplicate = seen.has(user.email);
+        seen.add(user.email);
+        return !duplicate;
+      });
+  }, [appContext.registeredUsers]);
 
-  // Ensure users have the required status field
-  const users = useMemo(() => allUsers.map(user => ({
-    ...user,
-    status: (user as any).status || 'active' // Default to active if status is missing
-  })), [allUsers]);
+  const { courses = [] } = appContext;
 
   const analytics = useMemo<AnalyticsData>(() => {
     // Filter out admin users for all analytics
@@ -297,15 +322,56 @@ const AdminDashboardPage = () => {
           
           {/* User Management Section */}
           <div className="mt-8">
-            <h2 className="text-2xl font-bold mb-4">User Management</h2>
-            <UserManagement 
-              users={users} 
-              onUserUpdate={handleUpdateUser} 
-              onUserDelete={handleDeleteUser}
-              onCreateUser={handleCreateUser}
-              showCreateUserModal={showCreateUserModal}
-              setShowCreateUserModal={setShowCreateUserModal}
-            />
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold">User Management</h2>
+              <button
+                onClick={() => setShowCreateUserModal(true)}
+                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                disabled={isLoading}
+              >
+                {isLoading ? 'Processing...' : 'Create New User'}
+              </button>
+            </div>
+
+            {/* Users Table */}
+            <div className="bg-white rounded-lg shadow overflow-hidden">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {users.map((user) => (
+                    <tr key={user.id}>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-900">{user.username}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-500">{user.email}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                          {user.role}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <button
+                          onClick={() => handleDeleteUser(user.id)}
+                          className="text-red-600 hover:text-red-900"
+                          disabled={isLoading}
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
           
           <div className="bg-white p-6 rounded-lg shadow">
@@ -319,17 +385,7 @@ const AdminDashboardPage = () => {
           </div>
         </div>
         
-        {/* User Management Section */}
-        <div className="mt-8">
-          <UserManagement 
-            users={users}
-            onUserUpdate={handleUpdateUser}
-            onUserDelete={handleDeleteUser}
-            onCreateUser={handleCreateUser}
-            showCreateUserModal={showCreateUserModal}
-            setShowCreateUserModal={setShowCreateUserModal}
-          />
-        </div>
+
         
         {/* Demographic Analytics */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
@@ -344,34 +400,82 @@ const AdminDashboardPage = () => {
             type="bar" 
           />
         </div>
-        
-        {/* Progress Distribution */}
-        <div className="mb-8">
-          <ChartComponent 
-            title="User Progress Distribution" 
-            data={analytics.progressDistribution} 
-            type="bar" 
-          />
-        </div>
+
       </div>
       
       {/* Create User Modal */}
       {showCreateUserModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold">Create New User</h3>
-              <button onClick={() => setShowCreateUserModal(false)} className="text-gray-500 hover:text-gray-700">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
+              <h2 className="text-xl font-bold">Create New User</h2>
+              <button
+                onClick={() => setShowCreateUserModal(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                &times;
               </button>
             </div>
-            <div className="mt-4">
-              <p className="text-sm text-blue-700">
-                Admin users are excluded from all analytics and user management views. Use the admin panel for admin user management.
-              </p>
-            </div>
+            <form onSubmit={handleCreateUser}>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Username
+                </label>
+                <input
+                  type="text"
+                  value={newUser.username}
+                  onChange={(e) => setNewUser({...newUser, username: e.target.value})}
+                  className="w-full p-2 border rounded"
+                  required
+                />
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  value={newUser.email}
+                  onChange={(e) => setNewUser({...newUser, email: e.target.value})}
+                  className="w-full p-2 border rounded"
+                  required
+                />
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Role
+                </label>
+                <select
+                  value={newUser.role}
+                  onChange={(e) => setNewUser({
+                    ...newUser, 
+                    role: e.target.value as 'Admin' | 'Instructor' | 'Student'
+                  })}
+                  className="w-full p-2 border rounded"
+                  required
+                >
+                  <option value="Instructor">Instructor</option>
+                  <option value="Student">Student</option>
+                </select>
+              </div>
+              <div className="flex justify-end space-x-3 mt-6">
+                <button
+                  type="button"
+                  onClick={() => setShowCreateUserModal(false)}
+                  className="px-4 py-2 border rounded text-gray-700"
+                  disabled={isLoading}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                  disabled={isLoading}
+                >
+                  {isLoading ? 'Creating...' : 'Create User'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
