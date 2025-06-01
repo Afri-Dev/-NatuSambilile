@@ -405,13 +405,33 @@ const AdminDashboardPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 py-8">
-        <div className="p-6">
-          <h1 className="text-3xl font-bold mb-8">Admin Dashboard</h1>
+    <div className="min-h-screen bg-gray-50 w-full">
+      <div className="w-full px-4 py-8">
+        <div className="w-full space-y-12">
+          <div className="px-6">
+            <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+          </div>
+          
+          {/* Main Chart Section */}
+          <div className="bg-white p-6 rounded-lg shadow mx-6 hover:shadow-md transition-shadow duration-200">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-semibold text-gray-800">User Signups (Last 30 Days)</h3>
+            </div>
+            <div className="h-[400px] w-full">
+              <ChartComponent 
+                title="" 
+                data={analytics.signupsByDate.map(item => ({
+                  label: new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+                  value: item.count
+                }))} 
+                type="bar"
+              />
+            </div>
+          </div>
           
           {/* Analytics Overview */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 px-6 mt-8">
+            {/* Stats Cards */}
             <div className="bg-white p-6 rounded-lg shadow">
               <h3 className="text-lg font-semibold mb-2">Total Users</h3>
               <p className="text-3xl font-bold">{analytics.totalUsers}</p>
@@ -435,7 +455,7 @@ const AdminDashboardPage = () => {
           </div>
           
           {/* User Management Section */}
-          <div className="mt-8">
+          <div className="px-6 space-y-8 mt-12">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold">User Management</h2>
               <button
@@ -492,78 +512,73 @@ const AdminDashboardPage = () => {
             </div>
           </div>
           
-          <div className="bg-white p-6 rounded-lg shadow">
-            <h3 className="text-lg font-semibold mb-2">Total Lessons</h3>
-            <p className="text-3xl font-bold">{analytics.totalLessons}</p>
-          </div>
-          <div className="bg-white p-6 rounded-lg shadow">
-            <h3 className="text-lg font-semibold mb-2">Quiz Attempts</h3>
-            <p className="text-3xl font-bold">{analytics.totalQuizAttempts}</p>
-            <p className="text-sm text-gray-500">Avg. Score: {analytics.averageQuizScore}</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 px-6 mt-8">
+            <div className="bg-white p-6 rounded-lg shadow hover:shadow-md transition-shadow duration-200">
+              <h3 className="text-lg font-semibold mb-2">Total Lessons</h3>
+              <p className="text-3xl font-bold">{analytics.totalLessons}</p>
+            </div>
+            <div className="bg-white p-6 rounded-lg shadow">
+              <h3 className="text-lg font-semibold mb-2">Quiz Attempts</h3>
+              <p className="text-3xl font-bold">{analytics.totalQuizAttempts}</p>
+              <p className="text-sm text-gray-500">Avg. Score: {analytics.averageQuizScore}</p>
+            </div>
           </div>
         </div>
         
 
         
         {/* User Growth & Analytics */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-            <div className="bg-white p-6 rounded-lg shadow">
-              <h3 className="text-lg font-semibold mb-4">User Signups (Last 30 Days)</h3>
-              <div className="h-64">
-                <ChartComponent 
-                  title="" 
-                  data={analytics.signupsByDate.map(item => ({
-                    label: new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-                    value: item.count
-                  }))} 
-                  type="bar"
-                />
+          <div className="grid grid-cols-1 gap-12 px-6 mt-12">
+            {/* Demographics and Activity */}
+            {/* Full width demographics card */}
+            <div className="bg-white p-6 rounded-lg shadow space-y-6 hover:shadow-md transition-shadow duration-200">
+              <div className="flex justify-between items-center">
+                <h3 className="text-xl font-semibold text-gray-800">Demographics</h3>
               </div>
-            </div>
-            <div className="grid grid-rows-2 gap-6">
-              <div className="bg-white p-6 rounded-lg shadow">
-                <h3 className="text-lg font-semibold mb-4">Demographics</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-500 mb-2">Gender</h4>
-                    <ChartComponent 
-                      title="" 
-                      data={analytics.genderDistribution} 
-                      type="pie"
-                    />
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-500 mb-2">Age Range</h4>
-                    <ChartComponent 
-                      title="" 
-                      data={analytics.ageRangeDistribution} 
-                      type="pie"
-                    />
-                  </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div>
+                  <h4 className="text-sm font-medium text-gray-500 mb-2">Gender</h4>
+                  <ChartComponent 
+                    title="" 
+                    data={analytics.genderDistribution} 
+                    type="pie"
+                  />
+                </div>
+                <div>
+                  <h4 className="text-sm font-medium text-gray-500 mb-2">Age Range</h4>
+                  <ChartComponent 
+                    title="" 
+                    data={analytics.ageRangeDistribution}
+                    type="pie"
+                  />
                 </div>
               </div>
-              <div className="bg-white p-6 rounded-lg shadow">
-                <h3 className="text-lg font-semibold mb-2">User Activity</h3>
-                <div className="grid grid-cols-3 gap-4 text-center">
-                  <div>
-                    <div className="text-2xl font-bold">{analytics.totalQuizAttempts}</div>
-                    <div className="text-sm text-gray-500">Quiz Attempts</div>
-                  </div>
-                  <div>
-                    <div className="text-2xl font-bold">{analytics.totalLessonCompletions}</div>
-                    <div className="text-sm text-gray-500">Lessons Completed</div>
-                  </div>
-                  <div>
-                    <div className="text-2xl font-bold">{analytics.averageSessionDuration}</div>
-                    <div className="text-sm text-gray-500">Avg. Session</div>
-                  </div>
+            </div>
+            
+            {/* User Activity Card */}
+            <div className="bg-white p-6 rounded-lg shadow space-y-4 hover:shadow-md transition-shadow duration-200">
+              <div className="flex justify-between items-center">
+                <h3 className="text-xl font-semibold text-gray-800">User Activity</h3>
+              </div>
+              <div className="grid grid-cols-3 gap-4 text-center">
+                <div>
+                  <div className="text-2xl font-bold">{analytics.totalQuizAttempts}</div>
+                  <div className="text-sm text-gray-500">Quiz Attempts</div>
+                </div>
+                <div>
+                  <div className="text-2xl font-bold">{analytics.totalLessonCompletions}</div>
+                  <div className="text-sm text-gray-500">Lessons Completed</div>
+                </div>
+                <div>
+                  <div className="text-2xl font-bold">{analytics.averageSessionDuration}</div>
+                  <div className="text-sm text-gray-500">Avg. Session</div>
                 </div>
               </div>
             </div>
           </div>
           
           {/* User Signup Timeline */}
-          <div className="bg-white p-6 rounded-lg shadow mb-8">
+          <div className="bg-white p-6 rounded-lg shadow mx-6 hover:shadow-md transition-shadow duration-200 mt-12">
             <h3 className="text-lg font-semibold mb-4">User Signup Timeline</h3>
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
