@@ -16,11 +16,11 @@ export interface AppContextType {
   addCourse: (course: Course) => void;
   updateCourse: (updatedCourse: Course) => void;
   deleteCourse: (courseId: string) => void;
-  
+
   addModule: (courseId: string, module: Module) => void;
   updateModule: (courseId: string, updatedModule: Module) => void;
   deleteModule: (courseId: string, moduleId: string) => void;
-  
+
   addLesson: (courseId: string, moduleId: string, lesson: Lesson) => void;
   updateLesson: (courseId: string, moduleId: string, updatedLesson: Lesson) => void;
   deleteLesson: (courseId: string, moduleId: string, lessonId: string) => void;
@@ -29,7 +29,7 @@ export interface AppContextType {
   addQuizToModule: (courseId: string, moduleId: string, quiz: Omit<Quiz, 'id' | 'moduleId' | 'questions'>) => Quiz | undefined;
   updateQuizInModule: (courseId: string, moduleId: string, updatedQuiz: Quiz) => void;
   deleteQuizFromModule: (courseId: string, moduleId: string, quizId: string) => void;
-  
+
   addQuestionToQuiz: (courseId: string, moduleId: string, quizId: string, question: Omit<Question, 'id' | 'quizId'>) => Question | undefined;
   updateQuestionInQuiz: (courseId: string, moduleId: string, quizId: string, updatedQuestion: Question) => void;
   deleteQuestionFromQuiz: (courseId: string, moduleId: string, quizId: string, questionId: string) => void;
@@ -78,7 +78,7 @@ const App: React.FC = () => {
         firstName: 'Admin',
         lastName: 'User',
         email: 'NatuSambilileadmin@gmail.com',
-        password: '12345qwert', 
+        password: '12345qwert',
         role: USER_ROLES.ADMIN as UserRole,
       };
       setRegisteredUsers([defaultAdmin]);
@@ -98,23 +98,23 @@ const App: React.FC = () => {
 
   const register = (userData: Omit<User, 'id' | 'lastLogin' | 'createdAt'>): { success: boolean; message?: string } => {
     const { username, email, password, role, gender, ageRange, firstName, lastName } = userData;
-    
+
     if (!username.trim() || !email.trim() || !password || !role || !firstName?.trim() || !lastName?.trim()) {
       return { success: false, message: "All required fields (username, email, password, first name, last name, role) must be provided for registration." };
     }
-    
+
     if (!/\S+@\S+\.\S+/.test(email)) {
       return { success: false, message: 'Invalid email format.' };
     }
-    
+
     const existingUser = registeredUsers.find(
       u => u.username.toLowerCase() === username.toLowerCase() || u.email.toLowerCase() === email.toLowerCase()
     );
-    
+
     if (existingUser) {
       return { success: false, message: "Username or email already exists." };
     }
-    
+
     const newUser: User = {
       id: crypto.randomUUID(),
       username,
@@ -130,7 +130,7 @@ const App: React.FC = () => {
       courses: [],
       quizAttempts: []
     };
-    
+
     setRegisteredUsers(prev => [...prev, newUser]);
     setCurrentUser(newUser); // Auto-login after registration
     return { success: true, message: "Registration successful! You are now logged in." };
@@ -140,7 +140,7 @@ const App: React.FC = () => {
   const logout = () => {
     setCurrentUser(null);
   };
-  
+
   const canEdit = (user: User | null): boolean => {
     return !!user && (user.role === USER_ROLES.ADMIN || user.role === USER_ROLES.INSTRUCTOR);
   };
@@ -163,19 +163,19 @@ const App: React.FC = () => {
     const quizzesInCourse = courses.find(c => c.id === courseId)?.modules.flatMap(m => m.quizzes?.map(q => q.id) || []) || [];
     setQuizAttempts(prev => prev.filter(qa => !quizzesInCourse.includes(qa.quizId)));
   };
-  
+
   // Module CRUD
   const addModule = (courseId: string, module: Module) => {
     if (!canEdit(currentUser)) return;
-    setCourses(prev => prev.map(c => 
+    setCourses(prev => prev.map(c =>
       c.id === courseId ? { ...c, modules: [...c.modules, {...module, quizzes: module.quizzes || []}] } : c
     ));
   };
   const updateModule = (courseId: string, updatedModule: Module) => {
     if (!canEdit(currentUser)) return;
-    setCourses(prev => prev.map(c => 
-      c.id === courseId 
-        ? { ...c, modules: c.modules.map(m => m.id === updatedModule.id ? {...updatedModule, quizzes: updatedModule.quizzes || []} : m) } 
+    setCourses(prev => prev.map(c =>
+      c.id === courseId
+        ? { ...c, modules: c.modules.map(m => m.id === updatedModule.id ? {...updatedModule, quizzes: updatedModule.quizzes || []} : m) }
         : c
     ));
   };
@@ -183,9 +183,9 @@ const App: React.FC = () => {
     if (!canEdit(currentUser)) return;
      const lessonsInModule = courses.find(c => c.id === courseId)?.modules.find(m => m.id === moduleId)?.lessons.map(l => l.id) || [];
      const quizzesInModule = courses.find(c => c.id === courseId)?.modules.find(m => m.id === moduleId)?.quizzes?.map(q => q.id) || [];
-    setCourses(prev => prev.map(c => 
-      c.id === courseId 
-        ? { ...c, modules: c.modules.filter(m => m.id !== moduleId) } 
+    setCourses(prev => prev.map(c =>
+      c.id === courseId
+        ? { ...c, modules: c.modules.filter(m => m.id !== moduleId) }
         : c
     ));
     setLessonProgress(prev => prev.filter(lp => !lessonsInModule.includes(lp.lessonId)));
@@ -195,35 +195,35 @@ const App: React.FC = () => {
   // Lesson CRUD
   const addLesson = (courseId: string, moduleId: string, lesson: Lesson) => {
     if (!canEdit(currentUser)) return;
-    setCourses(prev => prev.map(c => 
-      c.id === courseId 
-        ? { ...c, modules: c.modules.map(m => 
+    setCourses(prev => prev.map(c =>
+      c.id === courseId
+        ? { ...c, modules: c.modules.map(m =>
             m.id === moduleId ? { ...m, lessons: [...m.lessons, lesson] } : m
-          )} 
+          )}
         : c
     ));
   };
   const updateLesson = (courseId: string, moduleId: string, updatedLesson: Lesson) => {
     if (!canEdit(currentUser)) return;
-     setCourses(prev => prev.map(c => 
-      c.id === courseId 
-        ? { ...c, modules: c.modules.map(m => 
-            m.id === moduleId 
-              ? { ...m, lessons: m.lessons.map(l => l.id === updatedLesson.id ? updatedLesson : l) } 
+     setCourses(prev => prev.map(c =>
+      c.id === courseId
+        ? { ...c, modules: c.modules.map(m =>
+            m.id === moduleId
+              ? { ...m, lessons: m.lessons.map(l => l.id === updatedLesson.id ? updatedLesson : l) }
               : m
-          )} 
+          )}
         : c
     ));
   };
   const deleteLesson = (courseId: string, moduleId: string, lessonId: string) => {
     if (!canEdit(currentUser)) return;
-    setCourses(prev => prev.map(c => 
-      c.id === courseId 
-        ? { ...c, modules: c.modules.map(m => 
-            m.id === moduleId 
-              ? { ...m, lessons: m.lessons.filter(l => l.id !== lessonId) } 
+    setCourses(prev => prev.map(c =>
+      c.id === courseId
+        ? { ...c, modules: c.modules.map(m =>
+            m.id === moduleId
+              ? { ...m, lessons: m.lessons.filter(l => l.id !== lessonId) }
               : m
-          )} 
+          )}
         : c
     ));
     setLessonProgress(prev => prev.filter(lp => lp.lessonId !== lessonId));
@@ -232,11 +232,11 @@ const App: React.FC = () => {
   // Quiz Management
   const addQuizToModule = (courseId: string, moduleId: string, quizData: Omit<Quiz, 'id' | 'moduleId' | 'questions'>): Quiz | undefined => {
     if (!canEdit(currentUser)) return undefined;
-    const newQuiz: Quiz = { 
-        ...quizData, 
-        id: crypto.randomUUID(), 
-        moduleId, 
-        questions: [] 
+    const newQuiz: Quiz = {
+        ...quizData,
+        id: crypto.randomUUID(),
+        moduleId,
+        questions: []
     };
     setCourses(prev => prev.map(c => {
       if (c.id === courseId) {
@@ -371,7 +371,7 @@ const App: React.FC = () => {
       return c;
     }));
   };
-  
+
   // Quiz Attempts
   const addQuizAttempt = (attempt: QuizAttempt) => {
     setQuizAttempts(prev => [...prev, attempt]);
@@ -502,7 +502,7 @@ const App: React.FC = () => {
       percentage: totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0,
     };
   };
-  
+
   const getCourseProgress = (courseId: string, userId: string): { completed: number; total: number; percentage: number } => {
     const course = courses.find(c => c.id === courseId);
     if (!course || !currentUser || currentUser.id !== userId) return { completed: 0, total: 0, percentage: 0 };
@@ -510,7 +510,7 @@ const App: React.FC = () => {
     const allLessonsInCourse = course.modules.flatMap(m => m.lessons);
     const totalLessons = allLessonsInCourse.length;
     if (totalLessons === 0) return { completed: 0, total: 0, percentage: 0 };
-    
+
     const completedLessons = allLessonsInCourse.filter(l => isLessonCompleted(l.id)).length;
     return {
       completed: completedLessons,
@@ -543,8 +543,8 @@ const App: React.FC = () => {
               <Route path="/login" element={currentUser ? <Navigate to="/" /> : <LoginPage />} />
               <Route path="/" element={currentUser ? <HomePage /> : <Navigate to="/login" />} />
               <Route path="/course/:courseId" element={currentUser ? <CoursePage /> : <Navigate to="/login" />} />
-              <Route 
-                path="/admin-dashboard" 
+              <Route
+                path="/admin-dashboard"
                 element={
                   currentUser && currentUser.role === USER_ROLES.ADMIN ? (
                     <AdminDashboardPage />
@@ -553,7 +553,7 @@ const App: React.FC = () => {
                   ) : (
                     <Navigate to="/login" />
                   )
-                } 
+                }
               />
               <Route path="*" element={<Navigate to={currentUser ? "/" : "/login"} />} />
             </Routes>

@@ -1,16 +1,16 @@
 {
+  "$schema": "https://json.schemastore.org/package.json",
   "name": "natusambilile",
   "private": true,
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite --host 0.0.0.0",
+    "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview --host 0.0.0.0"
+    "preview": "vite preview"
   },
   "dependencies": {
     "@google/genai": "^1.2.0",
-    "@types/chart.js": "^4.0.1",
     "@types/react-csv": "^1.1.10",
     "@types/react-toastify": "^4.0.2",
     "@types/recharts": "^1.8.29",
@@ -38,6 +38,7 @@
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
+    "@types/chart.js": "^4.0.1",
     "@types/file-saver": "^2.0.7",
     "@types/node": "^22.14.0",
     "@types/react": "^19.1.6",

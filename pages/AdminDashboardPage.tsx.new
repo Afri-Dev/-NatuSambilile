@@ -15,7 +15,7 @@ interface User {
 const AdminDashboardPage = () => {
   const appContext = useContext(AppContext);
   if (!appContext) throw new Error("AppContext is null");
-  
+
   const [showCreateUserModal, setShowCreateUserModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [newUser, setNewUser] = useState({
@@ -33,7 +33,7 @@ const AdminDashboardPage = () => {
     try {
       setIsLoading(true);
       const result = appContext.addUserByAdmin(newUser);
-      
+
       if (result.success) {
         toast.success('User created successfully!');
         setNewUser({
