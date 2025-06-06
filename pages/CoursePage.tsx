@@ -1,5 +1,5 @@
 
-import React, { useState, useContext, useEffect } from 'react';
+import React, { useState, useContext, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Course, Module, Lesson, Quiz, Question, StudentAnswer, QuizAttempt } from '../types';
 import { AppContext, AppContextType } from '../App';
@@ -8,7 +8,9 @@ import ModuleForm from '../components/forms/ModuleForm';
 import LessonForm from '../components/forms/LessonForm';
 import QuizForm from '../components/forms/QuizForm';
 import QuestionForm from '../components/forms/QuestionForm';
-import { PlusIcon, EditIcon, TrashIcon, SparklesIcon, ChevronDownIcon, ChevronUpIcon, DEFAULT_COURSE_IMAGE, QuestionMarkCircleIcon, CheckCircleIcon, ListBulletIcon } from '../constants';
+import { PlusIcon, EditIcon, TrashIcon, SparklesIcon, ChevronDownIcon, ChevronUpIcon, DEFAULT_COURSE_IMAGE, CheckCircleIcon, ListBulletIcon } from '../constants';
+import ChatButton from '../components/dashboard/ChatButton';
+import Chatbot from '../components/dashboard/Chatbot';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import { generateModuleSuggestions } from '../services/geminiService';
 
@@ -20,7 +22,7 @@ const CoursePage: React.FC = () => {
     addLesson, updateLesson, deleteLesson,
     addQuizToModule, updateQuizInModule, deleteQuizFromModule,
     addQuestionToQuiz, updateQuestionInQuiz, deleteQuestionFromQuiz,
-    quizAttempts, addQuizAttempt, getQuizAttemptsForUser,
+    addQuizAttempt, getQuizAttemptsForUser,
     currentUser, canEdit,
     markLessonAsComplete, isLessonCompleted, getModuleProgress, getCourseProgress, lessonProgress 
   } = useContext(AppContext) as AppContextType;
@@ -49,6 +51,35 @@ const CoursePage: React.FC = () => {
   const [isQuizTakingModalOpen, setIsQuizTakingModalOpen] = useState(false);
   const [takingQuiz, setTakingQuiz] = useState<Quiz | null>(null);
   const [currentQuizAnswers, setCurrentQuizAnswers] = useState<StudentAnswer[]>([]);
+  
+  // Chatbot state
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const toggleChat = useCallback(() => {
+    setIsChatOpen(prev => !prev);
+  }, []);
+  
+  const courseContent = React.useMemo(() => {
+    if (!course) return '';
+    
+    // Create a string representation of the course content for the chatbot
+    const modulesContent = course.modules.map(module => {
+      const lessonsContent = module.lessons
+        .map(lesson => `- ${lesson.title}: ${lesson.content.substring(0, 200)}...`)
+        .join('\n');
+      
+      const quizzesContent = module.quizzes
+        .map(quiz => `- Quiz: ${quiz.title} (${quiz.questions?.length || 0} questions)`)
+        .join('\n');
+      
+      return `## ${module.title}\n` +
+             `### Lessons\n${lessonsContent}\n` +
+             (quizzesContent ? `### Quizzes\n${quizzesContent}\n` : '');
+    }).join('\n\n');
+    
+    return `# ${course.title}\n\n` +
+           `${course.description}\n\n` +
+           `## Course Content\n${modulesContent}`;
+  }, [course]);
 
   const [isQuizResultsModalOpen, setIsQuizResultsModalOpen] = useState(false);
   const [latestQuizAttempt, setLatestQuizAttempt] = useState<QuizAttempt | null>(null);
@@ -254,7 +285,8 @@ const CoursePage: React.FC = () => {
   if (!course) return <div className="container mx-auto p-8 text-center"><LoadingSpinner /> <p className="mt-2 text-neutral-dark">Loading course...</p></div>;
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="min-h-screen bg-gray-50 relative">
+      <div className="container mx-auto px-4 py-8">
       <Link to="/" className="text-primary hover:text-primary-dark mb-6 inline-block transition-colors">&larr; Back to Courses</Link>
       
       <div className="bg-white shadow-xl rounded-lg p-6 md:p-8 mb-8">
@@ -482,6 +514,18 @@ const CoursePage: React.FC = () => {
             </div>
         </Modal>
       )}
+      </div>
+      
+      {/* Chatbot Components */}
+      <ChatButton 
+        onClick={toggleChat} 
+        isOpen={isChatOpen} 
+      />
+      <Chatbot 
+        courseContent={courseContent} 
+        isOpen={isChatOpen} 
+        onClose={() => setIsChatOpen(false)} 
+      />
     </div>
   );
 };
