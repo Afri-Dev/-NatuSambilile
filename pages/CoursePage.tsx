@@ -52,6 +52,8 @@ const CoursePage: React.FC = () => {
   const [takingQuiz, setTakingQuiz] = useState<Quiz | null>(null);
   const [currentQuizAnswers, setCurrentQuizAnswers] = useState<StudentAnswer[]>([]);
   
+
+  
   // Chatbot state
   const [isChatOpen, setIsChatOpen] = useState(false);
   const toggleChat = useCallback(() => {
@@ -241,12 +243,17 @@ const CoursePage: React.FC = () => {
     }
   };
   
+  const handleStartQuiz = useCallback((quiz: Quiz) => {
+    setTakingQuiz(quiz);
+    setIsQuizTakingModalOpen(true);
+    setIsChatOpen(false); // Close chat when starting a quiz
+  }, []);
+
   const handleTakeQuiz = (quiz: Quiz) => {
     if (!currentUser) return;
-    setTakingQuiz(quiz);
+    handleStartQuiz(quiz);
     const initialAnswers: StudentAnswer[] = quiz.questions.map(q => ({ questionId: q.id, selectedOptionId: null }));
     setCurrentQuizAnswers(initialAnswers);
-    setIsQuizTakingModalOpen(true);
   };
 
   const handleQuizAnswerChange = (questionId: string, selectedOptionId: string) => {
@@ -516,16 +523,21 @@ const CoursePage: React.FC = () => {
       )}
       </div>
       
-      {/* Chatbot Components */}
-      <ChatButton 
-        onClick={toggleChat} 
-        isOpen={isChatOpen} 
-      />
-      <Chatbot 
-        courseContent={courseContent} 
-        isOpen={isChatOpen} 
-        onClose={() => setIsChatOpen(false)} 
-      />
+      {/* Chatbot Components - Hidden during quiz */}
+      {!isQuizTakingModalOpen && (
+        <>
+          <ChatButton 
+            onClick={toggleChat} 
+            isOpen={isChatOpen} 
+            disabled={isQuizTakingModalOpen}
+          />
+          <Chatbot 
+            courseContent={courseContent} 
+            isOpen={isChatOpen && !isQuizTakingModalOpen} 
+            onClose={() => setIsChatOpen(false)} 
+          />
+        </>
+      )}
     </div>
   );
 };
