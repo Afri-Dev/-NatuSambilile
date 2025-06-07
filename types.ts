@@ -87,6 +87,7 @@ export interface User {
   role: UserRole;
   gender?: Gender;
   ageRange?: AgeRange;
+  country?: string; // User's country
   lastLogin?: string; // ISO date string of last login
   createdAt?: string; // ISO date string of account creation
   courses?: string[]; // Array of course IDs the user is enrolled in

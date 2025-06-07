@@ -177,6 +177,27 @@ const AdminDashboardPage = () => {
 
   const { courses = [] } = appContext;
 
+  // Calculate country distribution
+  const countryDistribution = useMemo(() => {
+    const countryMap = new Map<string, number>();
+    
+    // Count users per country
+    users.forEach(user => {
+      const country = user.country || 'Not Specified';
+      countryMap.set(country, (countryMap.get(country) || 0) + 1);
+    });
+
+    // Convert to array and sort by count (descending)
+    return Array.from(countryMap.entries())
+      .map(([country, count]) => ({
+        label: country,
+        value: count,
+        percentage: (count / users.length) * 100
+      }))
+      .sort((a, b) => b.value - a.value);
+  }, [users]);
+
+  // Calculate analytics data
   const analytics = useMemo<AnalyticsData>(() => {
     // Filter out admin users for all analytics
     const nonAdminUsers = users.filter(user => user.role !== USER_ROLES.ADMIN);
@@ -454,6 +475,61 @@ const AdminDashboardPage = () => {
             </div>
           </div>
           
+          {/* Country Distribution Section */}
+          <div className="px-6 space-y-8 mt-12">
+            <div className="bg-white p-6 rounded-lg shadow">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold">User Distribution by Country</h2>
+              </div>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div className="h-96">
+                  <ChartComponent 
+                    data={countryDistribution.slice(0, 10)} 
+                    type="pie" 
+                    title="Top 10 Countries"
+                  />
+                </div>
+                <div className="h-96">
+                  <ChartComponent 
+                    data={countryDistribution}
+                    type="bar" 
+                    title="All Countries"
+                  />
+                </div>
+              </div>
+              <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="bg-blue-50 p-4 rounded-lg">
+                  <p className="text-sm font-medium text-blue-800">Total Countries</p>
+                  <p className="text-2xl font-bold text-blue-600">{countryDistribution.length}</p>
+                </div>
+                <div className="bg-green-50 p-4 rounded-lg">
+                  <p className="text-sm font-medium text-green-800">Top Country</p>
+                  <p className="text-lg font-semibold text-green-700">
+                    {countryDistribution[0]?.label || 'N/A'}
+                  </p>
+                  <p className="text-sm text-green-600">
+                    {countryDistribution[0]?.value} users ({countryDistribution[0]?.percentage.toFixed(1)}%)
+                  </p>
+                </div>
+                <div className="bg-purple-50 p-4 rounded-lg">
+                  <p className="text-sm font-medium text-purple-800">Users with Country</p>
+                  <p className="text-2xl font-bold text-purple-600">
+                    {users.filter(u => u.country).length}
+                  </p>
+                  <p className="text-sm text-purple-600">
+                    {((users.filter(u => u.country).length / users.length) * 100 || 0).toFixed(1)}% of total
+                  </p>
+                </div>
+                <div className="bg-amber-50 p-4 rounded-lg">
+                  <p className="text-sm font-medium text-amber-800">Unique Regions</p>
+                  <p className="text-2xl font-bold text-amber-600">
+                    {new Set(countryDistribution.map(c => c.label.split(',').pop()?.trim())).size}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* User Management Section */}
           <div className="px-6 space-y-8 mt-12">
             <div className="flex justify-between items-center mb-6">
@@ -475,6 +551,7 @@ const AdminDashboardPage = () => {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Username</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Country</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                   </tr>
@@ -490,6 +567,9 @@ const AdminDashboardPage = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-500">{user.username}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-500">{user.country || 'N/A'}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${user.role === 'Admin' ? 'bg-purple-100 text-purple-800' : user.role === 'Instructor' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}`}>

@@ -3,6 +3,7 @@ import React, { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppContext, AppContextType } from '../App';
 import { UserRole, Gender, AgeRange } from '../types';
+import { COUNTRIES } from '../constants/countries';
 import { USER_ROLES, XCircleIcon, CheckCircleIcon } from '../constants';
 
 const LoginPage: React.FC = () => {
@@ -19,6 +20,7 @@ const LoginPage: React.FC = () => {
   const [signupConfirmPassword, setSignupConfirmPassword] = useState('');
   const [gender, setGender] = useState<Gender>('prefer-not-to-say');
   const [ageRange, setAgeRange] = useState<AgeRange>('18-24');
+  const [country, setCountry] = useState('South Africa'); // Default to South Africa
   
   const [authMessage, setAuthMessage] = useState<{ type: 'error' | 'success', text: string } | null>(null);
   
@@ -48,6 +50,11 @@ const LoginPage: React.FC = () => {
   const handleSignupSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setAuthMessage(null);
+    
+    if (!country) {
+      setAuthMessage({ type: 'error', text: 'Please select your country.' });
+      return;
+    }
 
     if (!signupUsername.trim() || !firstName.trim() || !lastName.trim() || !signupEmail.trim() || !password.trim() || !signupConfirmPassword.trim()) {
       setAuthMessage({ type: 'error', text: 'Please fill in all required fields for signup.' });
@@ -94,16 +101,19 @@ const LoginPage: React.FC = () => {
   const toggleView = () => {
     setIsLoginView(!isLoginView);
     setIdentifier('');
-    setPassword('');
-    setSignupUsername('');
-    setFirstName('');
-    setMiddleName('');
-    setLastName('');
-    setSignupEmail('');
-    setSignupConfirmPassword('');
-    setGender('prefer-not-to-say');
-    setAgeRange('18-24');
-    setAuthMessage(null);
+    const resetSignupForm = () => {
+      setSignupUsername('');
+      setFirstName('');
+      setMiddleName('');
+      setLastName('');
+      setSignupEmail('');
+      setSignupConfirmPassword('');
+      setGender('prefer-not-to-say');
+      setAgeRange('18-24');
+      setCountry('South Africa');
+      setAuthMessage(null);
+    };
+    resetSignupForm();
   };
 
   return (
@@ -317,12 +327,13 @@ const LoginPage: React.FC = () => {
             {/* Age Range Selection */}
             <div>
               <label htmlFor="age-range" className="block text-sm font-medium text-neutral-dark mb-1">
-                Age Range
+                Age Range *
               </label>
               <select
                 id="age-range"
-                name="age-range"
-                className="appearance-none rounded-md relative block w-full px-3 py-3 border border-neutral-medium text-neutral-darker focus:outline-none focus:ring-primary focus:border-primary sm:text-sm bg-transparent"
+                name="ageRange"
+                required
+                className="appearance-none rounded-md relative block w-full px-3 py-3 border border-neutral-medium placeholder-neutral-dark text-neutral-darker focus:outline-none focus:ring-primary focus:border-primary sm:text-sm bg-transparent"
                 value={ageRange}
                 onChange={(e) => setAgeRange(e.target.value as AgeRange)}
               >
@@ -333,6 +344,28 @@ const LoginPage: React.FC = () => {
                 <option value="45-54">45-54</option>
                 <option value="55-64">55-64</option>
                 <option value="65-plus">65+</option>
+              </select>
+            </div>
+
+            {/* Country Selection */}
+            <div className="col-span-2">
+              <label htmlFor="country" className="block text-sm font-medium text-neutral-dark mb-1">
+                Country *
+              </label>
+              <select
+                id="country"
+                name="country"
+                required
+                className="appearance-none rounded-md relative block w-full px-3 py-3 border border-neutral-medium placeholder-neutral-dark text-neutral-darker focus:outline-none focus:ring-primary focus:border-primary sm:text-sm bg-transparent"
+                value={country}
+                onChange={(e) => setCountry(e.target.value)}
+              >
+                <option value="">Select your country</option>
+                {COUNTRIES.map((country) => (
+                  <option key={country} value={country}>
+                    {country}
+                  </option>
+                ))}
               </select>
             </div>
 
