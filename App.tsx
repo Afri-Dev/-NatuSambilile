@@ -97,10 +97,10 @@ const App: React.FC = () => {
   };
 
   const register = (userData: Omit<User, 'id' | 'lastLogin' | 'createdAt'>): { success: boolean; message?: string } => {
-    const { username, email, password, role, gender, ageRange, firstName, lastName } = userData;
+    const { username, email, password, role, gender, ageRange, firstName, lastName, country } = userData;
 
-    if (!username.trim() || !email.trim() || !password || !role || !firstName?.trim() || !lastName?.trim()) {
-      return { success: false, message: "All required fields (username, email, password, first name, last name, role) must be provided for registration." };
+    if (!username.trim() || !email.trim() || !password || !role || !firstName?.trim() || !lastName?.trim() || !country) {
+      return { success: false, message: "All required fields (username, email, password, first name, last name, role, country) must be provided for registration." };
     }
 
     if (!/\S+@\S+\.\S+/.test(email)) {
@@ -125,6 +125,7 @@ const App: React.FC = () => {
       role,
       gender,
       ageRange,
+      country, // Include country in the user object
       lastLogin: new Date().toISOString(),
       createdAt: new Date().toISOString(),
       courses: [],

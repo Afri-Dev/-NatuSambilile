@@ -163,7 +163,7 @@ const AdminDashboardPage = () => {
     }
   };
   
-  // Get unique users (filter duplicates by email)
+  // Get unique users (filter duplicates by email) and ensure country is properly set
   const users = useMemo(() => {
     const seen = new Set();
     return appContext.registeredUsers
@@ -172,7 +172,11 @@ const AdminDashboardPage = () => {
         const duplicate = seen.has(user.email);
         seen.add(user.email);
         return !duplicate;
-      });
+      })
+      .map(user => ({
+        ...user,
+        country: user.country || 'Not Specified' // Ensure country has a default value
+      }));
   }, [appContext.registeredUsers]);
 
   const { courses = [] } = appContext;

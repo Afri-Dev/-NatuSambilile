@@ -81,6 +81,7 @@ const LoginPage: React.FC = () => {
       role: USER_ROLES.STUDENT as UserRole,
       gender,
       ageRange,
+      country, // Include the country field
       courses: [],
       quizAttempts: []
     };
