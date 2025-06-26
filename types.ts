@@ -43,6 +43,7 @@ export interface Course {
   description: string;
   imageUrl?: string;
   modules: Module[];
+  createdAt?: string; // ISO date string of when the course was created
 }
 
 export interface GeminiContentRequest {
