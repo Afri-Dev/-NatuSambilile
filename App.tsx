@@ -6,7 +6,9 @@ import Footer from './components/common/Footer';
 import HomePage from './pages/HomePage';
 import CoursePage from './pages/CoursePage';
 import LoginPage from './pages/LoginPage';
-import AdminDashboardPage from './pages/AdminDashboardPage'; // Import AdminDashboardPage
+import AdminDashboardPage from './pages/AdminDashboardPage';
+import CoursesPage from './pages/CoursesPage';
+import MyLearningPage from './pages/MyLearningPage';
 import { Course, Module, Lesson, User, UserRole, Quiz, Question, QuizAttempt, LessonProgress } from './types';
 import useLocalStorage from './hooks/useLocalStorage';
 import { USER_ROLES } from './constants';
@@ -59,6 +61,9 @@ export interface AppContextType {
   isLessonCompleted: (lessonId: string) => boolean;
   getModuleProgress: (moduleId: string, userId: string) => { completed: number; total: number; percentage: number };
   getCourseProgress: (courseId: string, userId: string) => { completed: number; total: number; percentage: number };
+  
+  // Course Enrollment
+  enrollInCourse: (courseId: string) => Promise<boolean>;
 }
 
 export const AppContext = createContext<AppContextType | null>(null);
@@ -520,6 +525,30 @@ const App: React.FC = () => {
     };
   };
 
+  const enrollInCourse = async (courseId: string): Promise<boolean> => {
+    if (!currentUser) return false;
+    
+    try {
+      const updatedUser = {
+        ...currentUser,
+        enrolledCourses: [...(currentUser.enrolledCourses || []), courseId]
+      };
+      
+      setCurrentUser(updatedUser);
+      
+      // Update the user in registeredUsers
+      const updatedUsers = registeredUsers.map(user => 
+        user.id === currentUser.id ? updatedUser : user
+      );
+      setRegisteredUsers(updatedUsers);
+      
+      return true;
+    } catch (error) {
+      console.error('Error enrolling in course:', error);
+      return false;
+    }
+  };
+
 
   const contextValue: AppContextType = {
     courses, addCourse, updateCourse, deleteCourse,
@@ -531,7 +560,7 @@ const App: React.FC = () => {
     currentUser, registeredUsers, login, register, logout, canEdit,
     addUserByAdmin, updateUserRole, deleteUserByAdmin, // Added Admin functions
     lessonProgress, markLessonAsComplete, isLessonCompleted,
-    getModuleProgress, getCourseProgress
+    getModuleProgress, getCourseProgress, enrollInCourse
   };
 
   return (
@@ -543,6 +572,8 @@ const App: React.FC = () => {
             <Routes>
               <Route path="/login" element={currentUser ? <Navigate to="/" /> : <LoginPage />} />
               <Route path="/" element={currentUser ? <HomePage /> : <Navigate to="/login" />} />
+              <Route path="/courses" element={currentUser ? <CoursesPage /> : <Navigate to="/login" />} />
+              <Route path="/my-learning" element={currentUser ? <MyLearningPage /> : <Navigate to="/login" />} />
               <Route path="/course/:courseId" element={currentUser ? <CoursePage /> : <Navigate to="/login" />} />
               <Route
                 path="/admin-dashboard"

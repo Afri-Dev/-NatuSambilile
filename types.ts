@@ -44,6 +44,7 @@ export interface Course {
   imageUrl?: string;
   modules: Module[];
   createdAt?: string; // ISO date string of when the course was created
+  progress?: number; // For tracking user's progress in the course (0-100)
 }
 
 export interface GeminiContentRequest {
@@ -82,18 +83,19 @@ export interface User {
   id: string;
   username: string;
   firstName: string;
+  middleName?: string;
   lastName: string;
-  email: string; 
-  password?: string; // Plain text for demo purposes
+  email: string;
+  password: string;
   role: UserRole;
-  gender?: Gender;
-  ageRange?: AgeRange;
-  country?: string; // User's country
-  lastLogin?: string; // ISO date string of last login
-  createdAt?: string; // ISO date string of account creation
-  courses?: string[]; // Array of course IDs the user is enrolled in
-  quizAttempts?: QuizAttempt[]; // User's quiz attempts
-  progress?: UserProgress; // User's learning progress
+  lastLogin?: string;
+  createdAt?: string;
+  gender?: string;
+  ageRange?: string;
+  country?: string;
+  courses?: string[];
+  enrolledCourses?: string[];
+  quizAttempts?: string[];
 }
 
 // --- Quiz Attempts ---

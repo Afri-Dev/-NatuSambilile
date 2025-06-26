@@ -149,23 +149,6 @@ const LoginPage: React.FC = () => {
     }
   };
 
-  const toggleView = () => {
-    setIsLoginView(!isLoginView);
-    setIdentifier('');
-    const resetSignupForm = () => {
-      setSignupUsername('');
-      setFirstName('');
-      setMiddleName('');
-      setLastName('');
-      setSignupEmail('');
-      setSignupConfirmPassword('');
-      setGender('prefer-not-to-say');
-      setAgeRange('18-24');
-      setCountry('South Africa');
-      setAuthMessage(null);
-    };
-    resetSignupForm();
-  };
 
   // Clean up function to prevent memory leaks
   useEffect(() => {

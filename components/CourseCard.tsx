@@ -7,15 +7,44 @@ import { AppContext, AppContextType } from '../App';
 
 interface CourseCardProps {
   course: Course;
-  onEdit: (course: Course) => void;
-  onDelete: (courseId: string) => void;
+  onEdit?: (course: Course) => void;
+  onDelete?: (courseId: string) => void;
+  showEnrollButton?: boolean;
+  showProgress?: boolean;
 }
 
-const CourseCard: React.FC<CourseCardProps> = ({ course, onEdit, onDelete }) => {
-  const { currentUser, canEdit, getCourseProgress, lessonProgress } = useContext(AppContext) as AppContextType;
-  const userCanEdit = canEdit(currentUser);
-  const [progress, setProgress] = useState({ percentage: 0, completed: 0, total: 0 });
+const CourseCard: React.FC<CourseCardProps> = ({ 
+  course, 
+  onEdit, 
+  onDelete, 
+  showEnrollButton = false, 
+  showProgress = false 
+}) => {
+  const { currentUser, canEdit, getCourseProgress, lessonProgress, enrollInCourse } = useContext(AppContext) as AppContextType;
+  const userCanEdit = canEdit && canEdit(currentUser);
+  const [progress, setProgress] = useState({ percentage: course.progress || 0, completed: 0, total: 0 });
+  const [isEnrolling, setIsEnrolling] = useState(false);
   const isNew = course.createdAt ? new Date(course.createdAt).getTime() > Date.now() - 7 * 24 * 60 * 60 * 1000 : false; // Within last 7 days
+  
+  const showEnroll = showEnrollButton && currentUser && !userCanEdit && 
+    !currentUser.enrolledCourses?.includes(course.id);
+  const showProgressBar = (showProgress && progress.percentage > 0) || 
+    (currentUser?.enrolledCourses?.includes(course.id) && progress.percentage > 0);
+
+  const handleEnroll = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (!currentUser || !enrollInCourse) return;
+    
+    setIsEnrolling(true);
+    try {
+      await enrollInCourse(course.id);
+      // Progress will be updated via context
+    } catch (error) {
+      console.error('Failed to enroll in course:', error);
+    } finally {
+      setIsEnrolling(false);
+    }
+  };
 
   useEffect(() => {
     if (currentUser && !userCanEdit) { // Only calculate for students
@@ -43,9 +72,11 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, onEdit, onDelete }) => 
       <div className="p-6 flex flex-col flex-grow">
         <div className="flex items-start justify-between mb-2">
           <h3 className="text-2xl font-bold text-gray-900 group-hover:text-primary transition-colors">
-            {course.title}
+            <Link to={`/courses/${course.id}`} className="hover:underline">
+              {course.title}
+            </Link>
           </h3>
-          {userCanEdit && (
+          {userCanEdit && onEdit && onDelete && (
             <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
               <button
                 onClick={(e) => {
@@ -77,7 +108,17 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, onEdit, onDelete }) => 
         
         <p className="text-gray-600 text-sm mb-4 flex-grow line-clamp-3">{course.description}</p>
         
-        {currentUser && !userCanEdit && progress.total > 0 && (
+        {showEnroll ? (
+          <div className="mt-auto pt-4">
+            <button
+              onClick={handleEnroll}
+              disabled={isEnrolling}
+              className="w-full bg-primary hover:bg-primary-dark text-white font-medium py-2 px-4 rounded-lg transition-colors disabled:opacity-50"
+            >
+              {isEnrolling ? 'Enrolling...' : 'Enroll Now'}
+            </button>
+          </div>
+        ) : showProgressBar ? (
           <div className="mb-5">
             <div className="flex justify-between text-xs text-gray-500 mb-1.5">
               <span className="font-medium">Your Progress</span>
@@ -98,17 +139,17 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, onEdit, onDelete }) => 
               {progress.completed} of {progress.total} lessons
             </div>
           </div>
+        ) : (
+          <div className="mt-auto pt-4">
+            <Link
+              to={`/course/${course.id}`}
+              className="block w-full text-center bg-gradient-to-r from-primary to-secondary hover:from-primary-dark hover:to-secondary-dark text-white font-semibold py-2.5 px-4 rounded-lg transition-all duration-300 transform hover:scale-[1.02] shadow-md hover:shadow-lg"
+              aria-label={`${userCanEdit ? 'Manage' : 'View'} course: ${course.title}`}
+            >
+              {userCanEdit ? 'Manage Course' : 'View Course'}
+            </Link>
+          </div>
         )}
-
-        <div className="mt-auto">
-          <Link
-            to={`/course/${course.id}`}
-            className="block w-full text-center bg-gradient-to-r from-primary to-secondary hover:from-primary-dark hover:to-secondary-dark text-white font-semibold py-2.5 px-4 rounded-lg transition-all duration-300 transform hover:scale-[1.02] shadow-md hover:shadow-lg"
-            aria-label={`${userCanEdit ? 'Manage' : 'View'} course: ${course.title}`}
-          >
-            {userCanEdit ? 'Manage Course' : progress.completed > 0 ? 'Continue Learning' : 'Start Learning'}
-          </Link>
-        </div>
       </div>
     </div>
   );
