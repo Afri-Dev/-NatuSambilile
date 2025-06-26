@@ -9,6 +9,7 @@ import LoginPage from './pages/LoginPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
 import CoursesPage from './pages/CoursesPage';
 import MyLearningPage from './pages/MyLearningPage';
+import FileUploadPage from './pages/FileUploadPage';
 import { Course, Module, Lesson, User, UserRole, Quiz, Question, QuizAttempt, LessonProgress } from './types';
 import useLocalStorage from './hooks/useLocalStorage';
 import { USER_ROLES } from './constants';
@@ -574,6 +575,7 @@ const App: React.FC = () => {
               <Route path="/" element={currentUser ? <HomePage /> : <Navigate to="/login" />} />
               <Route path="/courses" element={currentUser ? <CoursesPage /> : <Navigate to="/login" />} />
               <Route path="/my-learning" element={currentUser ? <MyLearningPage /> : <Navigate to="/login" />} />
+              <Route path="/upload" element={currentUser ? <FileUploadPage /> : <Navigate to="/login" />} />
               <Route path="/course/:courseId" element={currentUser ? <CoursePage /> : <Navigate to="/login" />} />
               <Route
                 path="/admin-dashboard"
