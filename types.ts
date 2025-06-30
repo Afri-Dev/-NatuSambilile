@@ -96,6 +96,10 @@ export interface User {
   courses?: string[];
   enrolledCourses?: string[];
   quizAttempts?: string[];
+  progress?: {
+    percentage: number;
+    lastUpdated?: string;
+  };
 }
 
 // --- Quiz Attempts ---
