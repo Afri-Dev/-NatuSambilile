@@ -39,9 +39,9 @@ const FileUploadPage: React.FC = () => {
       }
       
       return {
-        file,
-        preview: file.type.startsWith('image/') ? URL.createObjectURL(file) : '',
-        progress: 0,
+      file,
+      preview: file.type.startsWith('image/') ? URL.createObjectURL(file) : '',
+      progress: 0,
       };
     });
     
@@ -149,7 +149,7 @@ const FileUploadPage: React.FC = () => {
       }
     }
     
-    setIsUploading(false);
+      setIsUploading(false);
   };
 
   const getFileIcon = (file: File) => {
@@ -389,16 +389,16 @@ const FileUploadPage: React.FC = () => {
             </div>
           </div>
         )}
-        
-        <div 
-          {...getRootProps()} 
+      
+      <div 
+        {...getRootProps()} 
           className={`relative border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all duration-300 ${
             isDragActive 
               ? 'border-blue-400 bg-gradient-to-br from-blue-50 to-indigo-50 shadow-lg scale-[1.02]' 
               : 'border-gray-300 hover:border-blue-400 hover:bg-gradient-to-br hover:from-gray-50 hover:to-blue-50 hover:shadow-md'
-          }`}
-        >
-          <input {...getInputProps()} />
+        }`}
+      >
+        <input {...getInputProps()} />
           
           {/* Background Pattern */}
           <div className="absolute inset-0 opacity-5">
@@ -457,142 +457,142 @@ const FileUploadPage: React.FC = () => {
                 <p className="text-xs text-blue-700 flex items-start space-x-1">
                   <span className="text-blue-500 mt-0.5">💡</span>
                   <span><strong>Pro Tip:</strong> For best results with Word documents, consider converting to PDF format.</span>
-                </p>
-              </div>
+            </p>
+          </div>
             </div>
             
             {/* Action Button */}
-            <button 
-              type="button" 
+          <button 
+            type="button" 
               className={`px-6 py-2 rounded-lg font-semibold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 ${
                 isDragActive
                   ? 'bg-white text-blue-600 hover:bg-gray-50'
                   : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700'
               }`}
-              onClick={(e) => {
-                e.stopPropagation();
-                fileInputRef.current?.click();
-              }}
-            >
+            onClick={(e) => {
+              e.stopPropagation();
+              fileInputRef.current?.click();
+            }}
+          >
               {isDragActive ? 'Browse Files' : 'Select Files'}
-            </button>
+          </button>
             
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleFileInput}
-              className="hidden"
-              multiple
-              accept="image/*,.pdf,.doc,.docx,.txt"
-            />
-          </div>
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileInput}
+            className="hidden"
+            multiple
+            accept="image/*,.pdf,.doc,.docx,.txt"
+          />
         </div>
+      </div>
 
-        {files.length > 0 && (
-          <div className="mt-12">
-            <div className="flex items-center justify-between mb-8">
+      {files.length > 0 && (
+        <div className="mt-8">
+            <div className="flex items-center justify-between mb-6">
               <div>
-                <h2 className="text-2xl font-bold text-gray-800 mb-2">Files Ready for Analysis</h2>
-                <p className="text-gray-600">Process your files with AI to get intelligent summaries and insights</p>
+                <h2 className="text-xl font-bold text-gray-800 mb-1">Files Ready for Analysis</h2>
+                <p className="text-sm text-gray-600">Process your files with AI to get intelligent summaries and insights</p>
               </div>
-              <div className="flex items-center space-x-2 text-sm text-gray-500">
+              <div className="flex items-center space-x-2 text-xs text-gray-500">
                 <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
                 <span>{files.length} {files.length === 1 ? 'file' : 'files'} selected</span>
               </div>
             </div>
             
-            <div className="space-y-6">
-              {files.map((fileData, index) => (
+            <div className="space-y-4">
+            {files.map((fileData, index) => (
                 <div key={index} className="group">
                   {/* File Item */}
-                  <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all duration-300 group-hover:border-blue-200">
+                  <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-lg transition-all duration-300 group-hover:border-blue-200">
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-3">
                         {/* File Icon */}
-                        <div className={`p-4 rounded-xl transition-all duration-300 ${
+                        <div className={`p-3 rounded-lg transition-all duration-300 ${
                           fileData.isProcessing 
                             ? 'bg-gradient-to-br from-blue-100 to-indigo-100 animate-pulse' 
                             : 'bg-gradient-to-br from-gray-50 to-gray-100'
                         }`}>
-                          {getFileIcon(fileData.file)}
-                        </div>
+                    {getFileIcon(fileData.file)}
+                  </div>
                         
                         {/* File Info */}
                         <div className="min-w-0 flex-1">
-                          <div className="flex items-center space-x-3 mb-2">
-                            <h3 className="text-lg font-semibold text-gray-900 truncate">
-                              {fileData.file.name}
+                          <div className="flex items-center space-x-2 mb-1">
+                            <h3 className="text-base font-semibold text-gray-900 truncate">
+                      {fileData.file.name}
                             </h3>
                             {fileData.isProcessing && (
-                              <div className="flex items-center space-x-2 px-3 py-1 bg-blue-100 rounded-full">
-                                <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
-                                <span className="text-sm font-medium text-blue-700">Processing</span>
+                              <div className="flex items-center space-x-1 px-2 py-0.5 bg-blue-100 rounded-full">
+                                <Loader2 className="w-3 h-3 animate-spin text-blue-600" />
+                                <span className="text-xs font-medium text-blue-700">Processing</span>
                               </div>
                             )}
                           </div>
                           
-                          <div className="flex items-center space-x-4 text-sm text-gray-500">
-                            <div className="flex items-center space-x-2">
-                              <span className="w-2 h-2 bg-gray-400 rounded-full"></span>
+                          <div className="flex items-center space-x-3 text-xs text-gray-500">
+                            <div className="flex items-center space-x-1">
+                              <span className="w-1.5 h-1.5 bg-gray-400 rounded-full"></span>
                               <span className="font-medium">{getFileTypeDescription(fileData.file)}</span>
                             </div>
-                            <div className="flex items-center space-x-2">
-                              <span className="w-2 h-2 bg-gray-400 rounded-full"></span>
+                            <div className="flex items-center space-x-1">
+                              <span className="w-1.5 h-1.5 bg-gray-400 rounded-full"></span>
                               <span>{(fileData.file.size / 1024).toFixed(1)} KB</span>
                             </div>
                             {fileData.processedAt && (
-                              <div className="flex items-center space-x-2">
-                                <span className="w-2 h-2 bg-green-400 rounded-full"></span>
+                              <div className="flex items-center space-x-1">
+                                <span className="w-1.5 h-1.5 bg-green-400 rounded-full"></span>
                                 <span>Processed {new Date(fileData.processedAt).toLocaleTimeString()}</span>
                               </div>
                             )}
                           </div>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center space-x-4">
+                  </div>
+                </div>
+                
+                      <div className="flex items-center space-x-3">
                         {/* Progress Bar */}
-                        <div className="flex items-center space-x-3">
-                          <div className="w-32 h-3 bg-gray-200 rounded-full overflow-hidden shadow-inner">
-                            <div 
+                <div className="flex items-center space-x-2">
+                          <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden shadow-inner">
+                    <div 
                               className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 transition-all duration-500 rounded-full shadow-sm"
-                              style={{ width: `${fileData.progress}%` }}
-                            />
-                          </div>
-                          <span className="text-sm font-medium text-gray-600 w-12 text-right">
+                      style={{ width: `${fileData.progress}%` }}
+                    />
+                  </div>
+                          <span className="text-xs font-medium text-gray-600 w-8 text-right">
                             {fileData.progress}%
                           </span>
                         </div>
                         
                         {/* Action Buttons */}
-                        <div className="flex items-center space-x-2">
+                        <div className="flex items-center space-x-1">
                           <button
                             onClick={() => handleTestBase64(fileData.file)}
-                            className="p-3 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-xl transition-all duration-200 group/btn"
+                            className="p-2 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-all duration-200 group/btn"
                             disabled={isUploading}
                             title="Test Base64 Conversion"
                           >
-                            <FileSearch className="w-5 h-5 group-hover/btn:scale-110 transition-transform" />
+                            <FileSearch className="w-4 h-4 group-hover/btn:scale-110 transition-transform" />
                           </button>
                           {supportsStreamingAnalysis(fileData.file) && (
                             <button
                               onClick={() => handleStreamingAnalysis(fileData.file)}
-                              className="p-3 text-gray-400 hover:text-green-500 hover:bg-green-50 rounded-xl transition-all duration-200 group/btn"
+                              className="p-2 text-gray-400 hover:text-green-500 hover:bg-green-50 rounded-lg transition-all duration-200 group/btn"
                               disabled={isUploading || isStreaming}
                               title="Streaming Analysis"
                             >
-                              <Brain className="w-5 h-5 group-hover/btn:scale-110 transition-transform" />
+                              <Brain className="w-4 h-4 group-hover/btn:scale-110 transition-transform" />
                             </button>
                           )}
-                          <button
-                            onClick={() => removeFile(index)}
-                            className="p-3 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all duration-200 group/btn"
-                            disabled={isUploading}
+                  <button
+                    onClick={() => removeFile(index)}
+                            className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all duration-200 group/btn"
+                    disabled={isUploading}
                             title="Remove File"
-                          >
-                            <X className="w-5 h-5 group-hover/btn:scale-110 transition-transform" />
-                          </button>
-                        </div>
+                  >
+                            <X className="w-4 h-4 group-hover/btn:scale-110 transition-transform" />
+                  </button>
+                </div>
                       </div>
                     </div>
                   </div>
@@ -772,66 +772,66 @@ const FileUploadPage: React.FC = () => {
                       </div>
                     </div>
                   )}
-                </div>
-              ))}
-            </div>
-            
-            <div className="mt-12 bg-white border border-gray-200 rounded-2xl p-8 shadow-sm">
+              </div>
+            ))}
+          </div>
+          
+            <div className="mt-8 bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
               <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-6">
-                  <div className="flex items-center space-x-2 text-sm text-gray-600">
-                    <span className="w-3 h-3 bg-blue-500 rounded-full"></span>
+                <div className="flex items-center space-x-4">
+                  <div className="flex items-center space-x-2 text-xs text-gray-600">
+                    <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
                     <span className="font-medium">{files.length} {files.length === 1 ? 'file' : 'files'} ready for processing</span>
                   </div>
                   {!isApiKeyValid && (
-                    <div className="flex items-center space-x-2 text-sm text-red-600">
-                      <span className="w-3 h-3 bg-red-500 rounded-full"></span>
+                    <div className="flex items-center space-x-2 text-xs text-red-600">
+                      <span className="w-2 h-2 bg-red-500 rounded-full"></span>
                       <span className="font-medium">API key required</span>
                     </div>
                   )}
                   {isUploading && (
-                    <div className="flex items-center space-x-2 text-sm text-blue-600">
-                      <Loader2 className="w-4 h-4 animate-spin" />
+                    <div className="flex items-center space-x-2 text-xs text-blue-600">
+                      <Loader2 className="w-3 h-3 animate-spin" />
                       <span className="font-medium">Processing files...</span>
                     </div>
                   )}
                 </div>
                 
-                <div className="flex items-center space-x-4">
-                  <button
-                    onClick={() => setFiles([])}
-                    className="px-6 py-3 border-2 border-gray-300 rounded-xl text-gray-700 hover:border-gray-400 hover:bg-gray-50 transition-all duration-200 font-semibold"
-                    disabled={isUploading}
-                  >
-                    Clear All
-                  </button>
-                  <button
+                <div className="flex items-center space-x-3">
+            <button
+              onClick={() => setFiles([])}
+                    className="px-4 py-2 border-2 border-gray-300 rounded-lg text-gray-700 hover:border-gray-400 hover:bg-gray-50 transition-all duration-200 font-semibold text-sm"
+              disabled={isUploading}
+            >
+              Clear All
+            </button>
+            <button
                     onClick={processFilesWithGemini}
                     disabled={isUploading || files.length === 0 || !isApiKeyValid}
-                    className="px-8 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 flex items-center space-x-3 disabled:opacity-50 disabled:cursor-not-allowed font-semibold shadow-lg hover:shadow-xl transform hover:scale-105"
-                  >
-                    {isUploading ? (
-                      <>
-                        <Loader2 className="w-5 h-5 animate-spin" />
+                    className="px-6 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 text-sm"
+            >
+              {isUploading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
                         <span>Processing Files...</span>
                       </>
                     ) : !isApiKeyValid ? (
                       <>
-                        <Key className="w-5 h-5" />
+                        <Key className="w-4 h-4" />
                         <span>API Key Required</span>
-                      </>
-                    ) : (
+                </>
+              ) : (
                       <>
-                        <Brain className="w-5 h-5" />
+                        <Brain className="w-4 h-4" />
                         <span>Process {files.length} {files.length === 1 ? 'File' : 'Files'} with AI</span>
                       </>
-                    )}
-                  </button>
+              )}
+            </button>
                 </div>
               </div>
-            </div>
           </div>
-        )}
+        </div>
+      )}
       </div>
     </div>
   );

@@ -39,9 +39,9 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({ isOpen, onClose, userRo
       buttonText: 'Next'
     },
     {
-      target: '.analytics',
-      title: 'Analytics',
-      content: 'Track user engagement, course completion rates, and system usage statistics.',
+      target: '.admin-lab',
+      title: 'AdminLab',
+      content: 'Access advanced tools, experiments, and system monitoring for administrators.',
       position: 'left',
       buttonText: 'Next'
     }

@@ -1,15 +1,16 @@
-
 import React, { createContext, useEffect } from 'react';
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Navbar from './components/common/Navbar';
 import Footer from './components/common/Footer';
-import HomePage from './pages/HomePage';
 import CoursePage from './pages/CoursePage';
 import LoginPage from './pages/LoginPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
+import AdminLabPage from './pages/AdminLabPage';
 import CoursesPage from './pages/CoursesPage';
 import MyLearningPage from './pages/MyLearningPage';
 import FileUploadPage from './pages/FileUploadPage';
+import SettingsPage from './pages/SettingsPage';
+import AboutPage from './pages/AboutPage';
 import { Course, Module, Lesson, User, UserRole, Quiz, Question, QuizAttempt, LessonProgress } from './types';
 import useLocalStorage from './hooks/useLocalStorage';
 import { USER_ROLES } from './constants';
@@ -572,16 +573,30 @@ const App: React.FC = () => {
           <main className="flex-grow">
             <Routes>
               <Route path="/login" element={currentUser ? <Navigate to="/" /> : <LoginPage />} />
-              <Route path="/" element={currentUser ? <HomePage /> : <Navigate to="/login" />} />
+              <Route path="/" element={currentUser ? <CoursesPage /> : <Navigate to="/login" />} />
               <Route path="/courses" element={currentUser ? <CoursesPage /> : <Navigate to="/login" />} />
               <Route path="/my-learning" element={currentUser ? <MyLearningPage /> : <Navigate to="/login" />} />
               <Route path="/upload" element={currentUser ? <FileUploadPage /> : <Navigate to="/login" />} />
+              <Route path="/settings" element={currentUser ? <SettingsPage /> : <Navigate to="/login" />} />
+              <Route path="/about" element={<AboutPage />} />
               <Route path="/course/:courseId" element={currentUser ? <CoursePage /> : <Navigate to="/login" />} />
               <Route
                 path="/admin-dashboard"
                 element={
                   currentUser && currentUser.role === USER_ROLES.ADMIN ? (
                     <AdminDashboardPage />
+                  ) : currentUser ? (
+                    <Navigate to="/" />
+                  ) : (
+                    <Navigate to="/login" />
+                  )
+                }
+              />
+              <Route
+                path="/admin-lab"
+                element={
+                  currentUser && currentUser.role === USER_ROLES.ADMIN ? (
+                    <AdminLabPage />
                   ) : currentUser ? (
                     <Navigate to="/" />
                   ) : (

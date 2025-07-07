@@ -483,7 +483,7 @@ export const generateLessonContent = async (courseTitle: string, moduleTitle: st
 export const generateModuleSuggestions = async (courseTitle: string, courseDescription: string): Promise<string[] | null> => {
   if (!API_KEY) return ["AI features disabled. API Key not configured."];
   try {
-    const prompt = `Based on the course titled "${courseTitle}" with the description: "${courseDescription}", suggest 3-5 relevant module titles. Return a JSON array of strings. Example: ["Module 1: Introduction", "Module 2: Core Concepts"]`;
+    const prompt = `Based on the course titled "${courseTitle}" with the description: "${courseDescription}", suggest a minimum of 10 relevant module titles that would provide comprehensive coverage of the course topic. The modules should follow a logical learning progression from basic concepts to advanced topics. Return a JSON array of strings. Example: ["Module 1: Introduction", "Module 2: Core Concepts", "Module 3: Advanced Topics", ...]`;
     
     const response: GenerateContentResponse = await ai.models.generateContent({
       model: GEMINI_MODEL_TEXT,
@@ -501,6 +501,22 @@ export const generateModuleSuggestions = async (courseTitle: string, courseDescr
     try {
       const parsedData = JSON.parse(jsonStr);
       if (Array.isArray(parsedData) && parsedData.every(item => typeof item === 'string')) {
+        // Ensure we have at least 10 suggestions, if not, add generic ones
+        if (parsedData.length < 10) {
+          const additionalModules = [
+            "Module " + (parsedData.length + 1) + ": Advanced Concepts",
+            "Module " + (parsedData.length + 2) + ": Practical Applications",
+            "Module " + (parsedData.length + 3) + ": Case Studies",
+            "Module " + (parsedData.length + 4) + ": Best Practices",
+            "Module " + (parsedData.length + 5) + ": Troubleshooting",
+            "Module " + (parsedData.length + 6) + ": Optimization Techniques",
+            "Module " + (parsedData.length + 7) + ": Industry Standards",
+            "Module " + (parsedData.length + 8) + ": Future Trends",
+            "Module " + (parsedData.length + 9) + ": Project Work",
+            "Module " + (parsedData.length + 10) + ": Final Assessment"
+          ];
+          return [...parsedData, ...additionalModules.slice(0, 10 - parsedData.length)];
+        }
         return parsedData;
       }
       console.warn("Gemini returned non-array or non-string array for module suggestions:", parsedData);

@@ -145,11 +145,11 @@ const Navbar: React.FC = () => {
                           </li>
                           <li>
                             <Link
-                              to="/analytics"
-                              className="analytics text-neutral-light hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white focus:rounded"
-                              aria-current={location.pathname === '/analytics' ? 'page' : undefined}
+                              to="/admin-lab"
+                              className="admin-lab text-neutral-light hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white focus:rounded"
+                              aria-current={location.pathname === '/admin-lab' ? 'page' : undefined}
                             >
-                              Analytics
+                              AdminLab
                             </Link>
                           </li>
                         </ul>
@@ -184,6 +184,15 @@ const Navbar: React.FC = () => {
                               aria-current={location.pathname === '/upload' ? 'page' : undefined}
                             >
                               Upload Files
+                            </Link>
+                          </li>
+                          <li>
+                            <Link
+                              to="/about"
+                              className="about text-neutral-light hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white focus:rounded"
+                              aria-current={location.pathname === '/about' ? 'page' : undefined}
+                            >
+                              About
                             </Link>
                           </li>
                         </ul>
@@ -223,13 +232,13 @@ const Navbar: React.FC = () => {
                         className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10 focus:outline-none"
                       >
                         <Link
-                          to="/profile"
+                          to="/settings"
                           role="menuitem"
                           tabIndex={-1}
                           onKeyDown={(e) => handleMenuItemKeyDown(e, 0, currentUser.role === USER_ROLES.ADMIN ? 2 : 3)}
                           className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 focus:bg-gray-100 focus:outline-none"
                         >
-                          Profile
+                          Settings
                         </Link>
                         {currentUser.role !== USER_ROLES.ADMIN && (
                           <button

@@ -1,7 +1,7 @@
 import React, { useContext, useMemo, useState } from 'react';
 import { AppContext } from '../App';
 import { toast } from 'react-toastify';
-import { USER_ROLES } from '../constants';
+import { USER_ROLES, DocumentArrowDownIcon, ArrowPathIcon } from '../constants';
 import { ChartComponent } from '../components/dashboard/ChartComponent';
 
 interface User {
@@ -80,6 +80,7 @@ const AdminDashboardPage = () => {
   
   const [showCreateUserModal, setShowCreateUserModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
 
   const [newUser, setNewUser] = useState<{
     username: string;
@@ -411,6 +412,179 @@ const AdminDashboardPage = () => {
       userSignupTimeline: signupsByDate
     };
   }, [users, courses]);
+
+  // CSV Download Functions
+  const downloadDashboardCSV = async () => {
+    setIsGeneratingReport(true);
+    try {
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const filename = `natusambilile-dashboard-report-${timestamp}.csv`;
+      
+      // Generate comprehensive CSV data
+      const csvData = generateDashboardCSVData();
+      
+      // Create and download CSV file
+      const csvContent = convertToCSV(csvData);
+      downloadCSVFile(csvContent, filename);
+      
+      toast.success('Dashboard CSV report downloaded successfully!');
+    } catch (error) {
+      console.error('Error generating CSV report:', error);
+      toast.error('Error generating CSV report: ' + error);
+    } finally {
+      setIsGeneratingReport(false);
+    }
+  };
+
+  const generateDashboardCSVData = () => {
+    const now = new Date();
+    const nonAdminUsers = users.filter(user => user.role !== USER_ROLES.ADMIN);
+    
+    // Dashboard Overview
+    const dashboardOverview = {
+      'Report Generated': now.toLocaleString(),
+      'Total Users': analytics.totalUsers,
+      'Active Users': analytics.activeUsers,
+      'New Users (30 days)': analytics.newUsers,
+      'Total Courses': analytics.totalCourses,
+      'Total Modules': analytics.totalModules,
+      'Total Lessons': analytics.totalLessons,
+      'Total Quizzes': analytics.totalQuizzes,
+      'User Retention Rate': `${analytics.userRetention}%`,
+      'Average Quiz Score': analytics.averageQuizScore,
+      'Average Session Duration': analytics.averageSessionDuration,
+      'Total Quiz Attempts': analytics.totalQuizAttempts,
+      'Total Lesson Completions': analytics.totalLessonCompletions
+    };
+
+    // User Demographics
+    const userDemographics = users.map(user => ({
+      'User ID': user.id,
+      'Username': user.username,
+      'First Name': user.firstName,
+      'Last Name': user.lastName,
+      'Email': user.email,
+      'Role': user.role,
+      'Gender': user.gender || 'Not specified',
+      'Age Range': user.ageRange || 'Not specified',
+      'Country': user.country || 'Not specified',
+      'Created At': user.createdAt ? new Date(user.createdAt).toLocaleString() : 'Unknown',
+      'Last Login': user.lastLogin ? new Date(user.lastLogin).toLocaleString() : 'Never',
+      'Days Since Registration': user.createdAt ? 
+        Math.floor((now.getTime() - new Date(user.createdAt).getTime()) / (1000 * 60 * 60 * 24)) : 0,
+      'Days Since Last Login': user.lastLogin ? 
+        Math.floor((now.getTime() - new Date(user.lastLogin).getTime()) / (1000 * 60 * 60 * 24)) : 'Never'
+    }));
+
+    // Course Analytics
+    const courseAnalytics = courses.map(course => ({
+      'Course ID': course.id,
+      'Course Title': course.title,
+      'Course Description': course.description,
+      'Module Count': course.modules.length,
+      'Lesson Count': course.modules.reduce((sum, mod) => sum + mod.lessons.length, 0),
+      'Quiz Count': course.modules.reduce((sum, mod) => sum + (mod.quizzes?.length || 0), 0),
+      'Total Content Items': course.modules.reduce((sum, mod) => 
+        sum + mod.lessons.length + (mod.quizzes?.length || 0), 0),
+      'Average Lessons per Module': course.modules.length > 0 ? 
+        (course.modules.reduce((sum, mod) => sum + mod.lessons.length, 0) / course.modules.length).toFixed(1) : '0'
+    }));
+
+    // User Signup Timeline
+    const signupTimeline = analytics.signupsByDate.map(item => ({
+      'Date': new Date(item.date).toLocaleDateString(),
+      'New Signups': item.count,
+      'Cumulative Users': item.count // This would be calculated in a real implementation
+    }));
+
+    // Gender Distribution
+    const genderData = analytics.genderDistribution.map(item => ({
+      'Gender': item.label,
+      'Count': item.value,
+      'Percentage': `${item.percentage?.toFixed(1)}%`
+    }));
+
+    // Age Range Distribution
+    const ageRangeData = analytics.ageRangeDistribution.map(item => ({
+      'Age Range': item.label,
+      'Count': item.value,
+      'Percentage': `${item.percentage?.toFixed(1)}%`
+    }));
+
+    // Country Distribution
+    const countryData = countryDistribution.map(item => ({
+      'Country': item.label,
+      'Count': item.value,
+      'Percentage': `${item.percentage?.toFixed(1)}%`
+    }));
+
+    // User Activity Summary
+    const userActivitySummary = {
+      'Total Active Users': analytics.activeUsers,
+      'User Retention Rate': `${analytics.userRetention}%`,
+      'Average Session Duration': analytics.averageSessionDuration,
+      'Total Quiz Attempts': analytics.totalQuizAttempts,
+      'Average Quiz Score': analytics.averageQuizScore,
+      'Total Lesson Completions': analytics.totalLessonCompletions,
+      'New Users This Month': analytics.newUsers,
+      'Total Users': analytics.totalUsers
+    };
+
+    return {
+      'Dashboard Overview': [dashboardOverview],
+      'User Demographics': userDemographics,
+      'Course Analytics': courseAnalytics,
+      'User Signup Timeline': signupTimeline,
+      'Gender Distribution': genderData,
+      'Age Range Distribution': ageRangeData,
+      'Country Distribution': countryData,
+      'User Activity Summary': [userActivitySummary]
+    };
+  };
+
+  const convertToCSV = (data: any) => {
+    let csvContent = '';
+    
+    Object.entries(data).forEach(([sheetName, sheetData]) => {
+      csvContent += `\n\n=== ${sheetName.toUpperCase()} ===\n\n`;
+      
+      if (Array.isArray(sheetData) && sheetData.length > 0) {
+        // Get headers from first object
+        const headers = Object.keys(sheetData[0]);
+        csvContent += headers.join(',') + '\n';
+        
+        // Add data rows
+        sheetData.forEach((row: any) => {
+          const values = headers.map(header => {
+            const value = row[header];
+            // Escape commas and quotes in CSV
+            if (typeof value === 'string' && (value.includes(',') || value.includes('"'))) {
+              return `"${value.replace(/"/g, '""')}"`;
+            }
+            return value;
+          });
+          csvContent += values.join(',') + '\n';
+        });
+      }
+    });
+    
+    return csvContent;
+  };
+
+  const downloadCSVFile = (content: string, filename: string) => {
+    const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    
+    if (link.download !== undefined) {
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', filename);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  };
 
   // Loading state for dynamic import
   if (typeof window === 'undefined') {
@@ -814,6 +988,26 @@ const AdminDashboardPage = () => {
           </div>
         </div>
       )}
+
+      {/* Floating Action Button for CSV Download */}
+      <button
+        onClick={downloadDashboardCSV}
+        disabled={isGeneratingReport}
+        className="fixed bottom-8 right-8 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white p-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-110 disabled:opacity-50 disabled:transform-none group"
+        title="Download Dashboard CSV Report"
+      >
+        {isGeneratingReport ? (
+          <ArrowPathIcon className="w-6 h-6 animate-spin" />
+        ) : (
+          <DocumentArrowDownIcon className="w-6 h-6" />
+        )}
+        
+        {/* Tooltip */}
+        <div className="absolute bottom-full right-0 mb-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
+          Download Dashboard CSV Report
+          <div className="absolute top-full right-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+        </div>
+      </button>
     </div>
   );
 };
