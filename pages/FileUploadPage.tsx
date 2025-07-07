@@ -194,6 +194,15 @@ const FileUploadPage: React.FC = () => {
       .replace(/$/, '</div>');
   };
 
+  // Loading animation component
+  const LoadingDots = () => (
+    <div className="flex space-x-1">
+      <div className="w-2 h-2 bg-current rounded-full animate-bounce"></div>
+      <div className="w-2 h-2 bg-current rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+      <div className="w-2 h-2 bg-current rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+    </div>
+  );
+
   const handleApiKeySubmit = () => {
     if (apiKey.trim()) {
       setGeminiApiKey(apiKey.trim());
@@ -296,56 +305,56 @@ const FileUploadPage: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50">
       <div className="container mx-auto px-4 py-8 max-w-6xl">
         {/* Header Section */}
-        <div className="text-center mb-12">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl mb-6 shadow-lg">
-            <Brain className="w-8 h-8 text-white" />
+        <div className="text-center mb-6">
+          <div className="inline-flex items-center justify-center w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg mb-3 shadow-md">
+            <Brain className="w-5 h-5 text-white" />
           </div>
-          <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-gray-900 via-blue-800 to-indigo-800 bg-clip-text text-transparent">
+          <h1 className="text-2xl font-bold mb-2 bg-gradient-to-r from-gray-900 via-blue-800 to-indigo-800 bg-clip-text text-transparent">
             AI-Powered File Analysis
           </h1>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-sm text-gray-600 max-w-lg mx-auto">
             Upload documents, images, and files to get intelligent summaries, text extraction, and comprehensive analysis powered by Google Gemini AI.
           </p>
         </div>
         
         {/* API Key Setup */}
         {!isApiKeyValid ? (
-          <div className="mb-8 bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-2xl p-6 shadow-sm">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center space-x-3">
-                <div className="p-2 bg-yellow-100 rounded-lg">
-                  <Key className="w-5 h-5 text-yellow-600" />
+          <div className="mb-6 bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-xl p-4 shadow-sm">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center space-x-2">
+                <div className="p-1.5 bg-yellow-100 rounded-md">
+                  <Key className="w-4 h-4 text-yellow-600" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-yellow-800">API Key Required</h3>
-                  <p className="text-sm text-yellow-700">Set up your Gemini API key to start analyzing files</p>
+                  <h3 className="text-base font-semibold text-yellow-800">API Key Required</h3>
+                  <p className="text-xs text-yellow-700">Set up your Gemini API key to start analyzing files</p>
                 </div>
               </div>
               <button
                 onClick={() => setShowApiKeyInput(!showApiKeyInput)}
-                className="px-4 py-2 bg-gradient-to-r from-yellow-500 to-orange-500 text-white rounded-lg text-sm font-medium hover:from-yellow-600 hover:to-orange-600 transition-all duration-200 shadow-sm hover:shadow-md"
+                className="px-3 py-1.5 bg-gradient-to-r from-yellow-500 to-orange-500 text-white rounded-md text-xs font-medium hover:from-yellow-600 hover:to-orange-600 transition-all duration-200 shadow-sm hover:shadow-md"
               >
                 {showApiKeyInput ? 'Cancel' : 'Set API Key'}
               </button>
             </div>
             
             {showApiKeyInput && (
-              <div className="space-y-4 p-4 bg-white rounded-xl border border-yellow-200">
-                <p className="text-sm text-gray-700">
+              <div className="space-y-3 p-3 bg-white rounded-lg border border-yellow-200">
+                <p className="text-xs text-gray-700">
                   Enter your Google Gemini API key to enable AI file processing:
                 </p>
-                <div className="flex space-x-3">
+                <div className="flex space-x-2">
                   <input
                     type="password"
                     value={apiKey}
                     onChange={(e) => setApiKey(e.target.value)}
                     placeholder="Enter your Gemini API key"
-                    className="flex-1 px-4 py-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition-all duration-200"
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-xs focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition-all duration-200"
                   />
                   <button
                     onClick={handleApiKeySubmit}
                     disabled={!apiKey.trim()}
-                    className="px-6 py-3 bg-gradient-to-r from-yellow-500 to-orange-500 text-white rounded-lg text-sm font-medium hover:from-yellow-600 hover:to-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-sm hover:shadow-md"
+                    className="px-4 py-2 bg-gradient-to-r from-yellow-500 to-orange-500 text-white rounded-md text-xs font-medium hover:from-yellow-600 hover:to-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-sm hover:shadow-md"
                   >
                     Save Key
                   </button>
@@ -359,20 +368,20 @@ const FileUploadPage: React.FC = () => {
             )}
           </div>
         ) : (
-          <div className="mb-8 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-2xl p-6 shadow-sm">
+          <div className="mb-6 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-4 shadow-sm">
             <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className="p-2 bg-green-100 rounded-lg">
-                  <Key className="w-5 h-5 text-green-600" />
+              <div className="flex items-center space-x-2">
+                <div className="p-1.5 bg-green-100 rounded-md">
+                  <Key className="w-4 h-4 text-green-600" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-green-800">API Key Configured ✓</h3>
-                  <p className="text-sm text-green-700">Ready to analyze files with AI</p>
+                  <h3 className="text-base font-semibold text-green-800">API Key Configured ✓</h3>
+                  <p className="text-xs text-green-700">Ready to analyze files with AI</p>
                 </div>
               </div>
               <button
                 onClick={handleTestAllFileTypes}
-                className="px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-lg text-sm font-medium hover:from-green-600 hover:to-emerald-600 transition-all duration-200 shadow-sm hover:shadow-md"
+                className="px-3 py-1.5 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-md text-xs font-medium hover:from-green-600 hover:to-emerald-600 transition-all duration-200 shadow-sm hover:shadow-md"
                 title="Test all supported file types"
               >
                 Test File Types
@@ -383,7 +392,7 @@ const FileUploadPage: React.FC = () => {
         
         <div 
           {...getRootProps()} 
-          className={`relative border-2 border-dashed rounded-2xl p-16 text-center cursor-pointer transition-all duration-300 ${
+          className={`relative border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all duration-300 ${
             isDragActive 
               ? 'border-blue-400 bg-gradient-to-br from-blue-50 to-indigo-50 shadow-lg scale-[1.02]' 
               : 'border-gray-300 hover:border-blue-400 hover:bg-gradient-to-br hover:from-gray-50 hover:to-blue-50 hover:shadow-md'
@@ -393,61 +402,61 @@ const FileUploadPage: React.FC = () => {
           
           {/* Background Pattern */}
           <div className="absolute inset-0 opacity-5">
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-400 to-indigo-400 rounded-2xl"></div>
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-400 to-indigo-400 rounded-xl"></div>
           </div>
           
-          <div className="relative flex flex-col items-center justify-center space-y-6">
+          <div className="relative flex flex-col items-center justify-center space-y-4">
             {/* Upload Icon */}
-            <div className={`p-6 rounded-2xl transition-all duration-300 ${
+            <div className={`p-4 rounded-xl transition-all duration-300 ${
               isDragActive 
                 ? 'bg-gradient-to-br from-blue-500 to-indigo-500 shadow-lg scale-110' 
                 : 'bg-gradient-to-br from-gray-100 to-gray-200'
             }`}>
-              <Upload className={`w-12 h-12 transition-all duration-300 ${
+              <Upload className={`w-8 h-8 transition-all duration-300 ${
                 isDragActive ? 'text-white' : 'text-gray-400'
               }`} />
             </div>
             
             {/* Content */}
-            <div className="max-w-md">
-              <h3 className={`text-2xl font-bold mb-3 transition-colors duration-300 ${
+            <div className="max-w-sm">
+              <h3 className={`text-xl font-bold mb-2 transition-colors duration-300 ${
                 isDragActive ? 'text-blue-700' : 'text-gray-800'
               }`}>
                 {isDragActive ? 'Drop files here' : 'Upload Files for AI Analysis'}
               </h3>
-              <p className="text-gray-600 mb-4 leading-relaxed">
+              <p className="text-sm text-gray-600 mb-3">
                 Drag and drop your files here, or click to browse. Our AI will analyze documents, extract text, and provide comprehensive summaries.
               </p>
               
               {/* File Type Info */}
-              <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4 border border-gray-200 mb-4">
-                <h4 className="text-sm font-semibold text-gray-800 mb-2">Supported Formats</h4>
-                <div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
-                  <div className="flex items-center space-x-2">
-                    <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+              <div className="bg-white/80 backdrop-blur-sm rounded-lg p-3 border border-gray-200 mb-3">
+                <h4 className="text-xs font-semibold text-gray-800 mb-1">Supported Formats</h4>
+                <div className="grid grid-cols-2 gap-1 text-xs text-gray-600">
+                  <div className="flex items-center space-x-1">
+                    <span className="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
                     <span>Images (JPEG, PNG, GIF, WebP)</span>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <span className="w-2 h-2 bg-red-500 rounded-full"></span>
+                  <div className="flex items-center space-x-1">
+                    <span className="w-1.5 h-1.5 bg-red-500 rounded-full"></span>
                     <span>PDF Documents</span>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                  <div className="flex items-center space-x-1">
+                    <span className="w-1.5 h-1.5 bg-blue-500 rounded-full"></span>
                     <span>Word Documents (.doc, .docx)</span>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <span className="w-2 h-2 bg-gray-500 rounded-full"></span>
+                  <div className="flex items-center space-x-1">
+                    <span className="w-1.5 h-1.5 bg-gray-500 rounded-full"></span>
                     <span>Text Files (.txt)</span>
                   </div>
                 </div>
-                <p className="text-xs text-gray-500 mt-2">Maximum file size: 4MB per file</p>
+                <p className="text-xs text-gray-500 mt-1">Maximum file size: 4MB per file</p>
               </div>
               
               {/* Tip */}
-              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-3 border border-blue-200">
-                <p className="text-xs text-blue-700 flex items-start space-x-2">
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-2 border border-blue-200">
+                <p className="text-xs text-blue-700 flex items-start space-x-1">
                   <span className="text-blue-500 mt-0.5">💡</span>
-                  <span><strong>Pro Tip:</strong> For best results with Word documents, consider converting to PDF format. Some .docx files may have limited text extraction.</span>
+                  <span><strong>Pro Tip:</strong> For best results with Word documents, consider converting to PDF format.</span>
                 </p>
               </div>
             </div>
@@ -455,7 +464,7 @@ const FileUploadPage: React.FC = () => {
             {/* Action Button */}
             <button 
               type="button" 
-              className={`px-8 py-3 rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 ${
+              className={`px-6 py-2 rounded-lg font-semibold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 ${
                 isDragActive
                   ? 'bg-white text-blue-600 hover:bg-gray-50'
                   : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700'
@@ -714,11 +723,7 @@ const FileUploadPage: React.FC = () => {
                           </div>
                           {isStreaming && (
                             <div className="flex items-center space-x-3">
-                              <div className="flex space-x-1">
-                                <div className="w-2 h-2 bg-white rounded-full animate-bounce"></div>
-                                <div className="w-2 h-2 bg-white rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                                <div className="w-2 h-2 bg-white rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                              </div>
+                              <LoadingDots />
                               <span className="text-xs text-green-100 font-medium">LIVE</span>
                             </div>
                           )}
