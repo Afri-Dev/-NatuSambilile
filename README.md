@@ -24,6 +24,12 @@ NatuSambilile is an interactive Learning Management System (LMS) designed to fac
     *   Mark lessons as complete.
     *   Track progress at lesson, module, and course levels.
     *   Take quizzes and view results immediately.
+*   **AI-Powered File Analysis:**
+    *   Upload and analyze various file types (images, PDFs, Word documents, text files).
+    *   Automatic OCR (Optical Character Recognition) for images to extract text.
+    *   Content summarization and educational analysis.
+    *   Text extraction from documents with preserved formatting.
+    *   Real-time processing status and error handling.
 *   **Responsive Design:** User interface adaptable to various screen sizes.
 *   **Data Persistence (Current):** Uses browser `localStorage` for storing course data, user information, and progress (for demonstration and basic offline testing).
 
@@ -158,6 +164,7 @@ The project is organized as follows:
 ├── pages/
 │   ├── HomePage.tsx      # Displays list of courses
 │   ├── CoursePage.tsx    # Displays details of a single course (modules, lessons, quizzes)
+│   ├── FileUploadPage.tsx # AI-powered file analysis and processing
 │   └── LoginPage.tsx     # User login and registration page
 └── (other potential assets or config files)
 ```

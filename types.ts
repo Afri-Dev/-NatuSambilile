@@ -1,4 +1,3 @@
-
 export interface Lesson {
   id: string;
   title: string;
@@ -123,4 +122,16 @@ export interface LessonProgress {
   lessonId: string;
   userId: string;
   completedAt: string; // ISO date string
+}
+
+// --- File Upload and Processing ---
+export interface UploadedFile {
+  file: File;
+  preview: string;
+  progress: number;
+  error?: string;
+  summary?: string;
+  extractedText?: string;
+  isProcessing?: boolean;
+  processedAt?: string;
 }
