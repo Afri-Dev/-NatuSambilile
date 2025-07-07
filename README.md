@@ -1,4 +1,3 @@
-
 # NatuSambilile - Let Us Learn
 
 NatuSambilile is an interactive Learning Management System (LMS) designed to facilitate online education. It leverages the Google Gemini API for AI-powered content generation, allowing administrators and instructors to easily create engaging courses, modules, and lessons. Students can track their progress, complete lessons, and take quizzes.
@@ -30,8 +29,61 @@ NatuSambilile is an interactive Learning Management System (LMS) designed to fac
     *   Content summarization and educational analysis.
     *   Text extraction from documents with preserved formatting.
     *   Real-time processing status and error handling.
-*   **Responsive Design:** User interface adaptable to various screen sizes.
+*   **Donations:**
+    *   Students and unauthenticated users can access a Donations page to support the platform.
+    *   For students, the Donations link appears in the profile dropdown menu; for unauthenticated users, it appears in the main navigation.
+    *   The Donations page features a modern UI, demo donation form, and thank you confirmation (no real payment integration).
+*   **AdminLab & Analytics:**
+    *   Admins have access to an AdminLab page with AI experiments, system monitoring, model management, and automation tools.
+    *   Downloadable CSV reports are available via Floating Action Buttons (FABs) on admin dashboards.
+*   **Settings & About:**
+    *   A comprehensive settings page for user preferences, API key management, and notifications.
+    *   An About page focused on SDG 4 (Quality Education) and supporting SDGs, with mission, vision, and values.
+*   **Responsive, Modern UI:**
+    *   Gradient backgrounds, compact layouts, animated icons, and collapsible sections.
+    *   Consistent branding and playful empty states.
 *   **Data Persistence (Current):** Uses browser `localStorage` for storing course data, user information, and progress (for demonstration and basic offline testing).
+
+## Navigation & User Roles
+
+- **Admins:** See admin dashboard, user management, and AdminLab in the nav.
+- **Instructors/Students:** See Courses, My Learning, Upload Files, and About.
+- **Students:** Donations link is in the profile dropdown menu.
+- **Unauthenticated users:** Donations and Login links are in the main nav.
+- **Profile Dropdown:** Accessible for logged-in users, includes Settings, Take a Tour, Donations (for students), and Logout.
+
+## Donations Page
+
+- **Access:**
+  - Students: Open the profile dropdown and click "Donations".
+  - Unauthenticated users: Click "Donations" in the main nav.
+- **Functionality:**
+  - Enter a donation amount and click Donate to see a thank you message (demo only).
+  - No real payment is processed; payment integration can be added in the future.
+
+## AdminLab & Analytics
+
+- **AdminLab:**
+  - AI experiments, system monitoring, model management, automation tools, and quick actions.
+  - Download detailed CSV reports via FAB.
+- **Admin Dashboard:**
+  - Overview of users, courses, and activity.
+  - Download dashboard data as CSV via FAB.
+
+## About & Settings
+
+- **About:**
+  - Focused on SDG 4 (Quality Education) and supporting SDGs.
+  - Includes mission, vision, values, testimonials, and a "Powered by" section.
+- **Settings:**
+  - Manage profile, API key, security, preferences, and notifications.
+
+## UI/UX Highlights
+
+- Modern, compact, and responsive design.
+- Animated icons and playful empty states.
+- Gradient backgrounds and consistent branding.
+- Profile dropdown for user actions and navigation.
 
 ## Tech Stack
 
@@ -178,3 +230,20 @@ Vercel is a great platform for deploying modern web applications. Here's how you
 *   Git (if your project is not already in a Git repository, initialize one and push it to GitHub/GitLab/Bitbucket).
 
 ### 2. Deployment Steps
+
+## Contributing
+
+1. Fork the repository and create a feature branch.
+2. Make your changes and add tests if needed.
+3. Submit a pull request with a clear description of your changes.
+
+## Troubleshooting
+
+- If the site does not show, check for router conflicts or missing routes in `App.tsx` and `index.tsx`.
+- Ensure your user role matches the expected string (e.g., "Student" for students).
+- For AI features, ensure your Gemini API key is set up correctly.
+- For further help, open an issue or contact the maintainer.
+
+---
+
+For more details, see the full documentation in each source file and comments throughout the codebase.

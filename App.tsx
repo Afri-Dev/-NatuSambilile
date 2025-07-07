@@ -11,6 +11,7 @@ import MyLearningPage from './pages/MyLearningPage';
 import FileUploadPage from './pages/FileUploadPage';
 import SettingsPage from './pages/SettingsPage';
 import AboutPage from './pages/AboutPage';
+import DonationsPage from './pages/DonationsPage';
 import { Course, Module, Lesson, User, UserRole, Quiz, Question, QuizAttempt, LessonProgress } from './types';
 import useLocalStorage from './hooks/useLocalStorage';
 import { USER_ROLES } from './constants';
@@ -604,6 +605,7 @@ const App: React.FC = () => {
                   )
                 }
               />
+              <Route path="/donations" element={<DonationsPage />} />
               <Route path="*" element={<Navigate to={currentUser ? "/" : "/login"} />} />
             </Routes>
           </main>

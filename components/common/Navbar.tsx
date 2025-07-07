@@ -251,6 +251,16 @@ const Navbar: React.FC = () => {
                             Take a Tour
                           </button>
                         )}
+                        {currentUser.role?.toLowerCase() === USER_ROLES.STUDENT.toLowerCase() && (
+                          <Link
+                            to="/donations"
+                            role="menuitem"
+                            tabIndex={-1}
+                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 focus:bg-gray-100 focus:outline-none"
+                          >
+                            Donations
+                          </Link>
+                        )}
                         <button
                           onClick={handleLogout}
                           role="menuitem"
@@ -265,13 +275,22 @@ const Navbar: React.FC = () => {
                   </div>
                 </>
               ) : (
-                <Link
-                  to="/login"
-                  className="text-neutral-light hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white focus:rounded"
-                  aria-label="Login to your account"
-                >
-                  Login
-                </Link>
+                <>
+                  <Link
+                    to="/donations"
+                    className="donations text-neutral-light hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white focus:rounded"
+                    aria-current={location.pathname === '/donations' ? 'page' : undefined}
+                  >
+                    Donations
+                  </Link>
+                  <Link
+                    to="/login"
+                    className="text-neutral-light hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white focus:rounded"
+                    aria-label="Login to your account"
+                  >
+                    Login
+                  </Link>
+                </>
               )}
             </div>
           </div>
